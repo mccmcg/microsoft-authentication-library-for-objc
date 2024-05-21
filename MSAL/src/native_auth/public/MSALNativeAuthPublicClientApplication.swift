@@ -152,6 +152,10 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         print("This is a test")
     }
 
+    public func test2() {
+        print("This is a test 2")
+    }
+
     // MARK: delegate methods
 
     /// Sign up a user with a given username and password.
