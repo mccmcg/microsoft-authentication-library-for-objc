@@ -106,7 +106,7 @@ git fetch
 git switch main
 
 git branch -D "$BRANCH_NAME"
-#git push origin --delete "$BRANCH_NAME"
+git push origin --delete "$BRANCH_NAME"
 
 if [ $BUILD_STATUS -ne 0 ]; then
   echo "** BUILD FAILED **"
