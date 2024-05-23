@@ -1,6 +1,6 @@
 # We are in source directory
 
-BRANCH_NAME="ci/testspm"
+BRANCH_NAME="$(git branch --show-current)-ci/testspm"
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d")
 
@@ -97,7 +97,6 @@ git checkout -- .
 git fetch
 #git checkout -f main
 git switch main
-# DJB: + consider using some dynamic value in the name of the branch (for example the name of the current branch or current date)
 
 git branch -D "$BRANCH_NAME"
 git push origin --delete "$BRANCH_NAME"
