@@ -11,8 +11,32 @@ echo "=== Begin xcframework operations ==="
 rm -rf archive framework MSAL.zip 
 
 xcodebuild -sdk iphonesimulator -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOSSimulator CODE_SIGNING_ALLOWED=NO
+
+XCBUILD_STATUS_SIM=$?
+
+if [ $XCBUILD_STATUS_SIM -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+fi
+
 xcodebuild -sdk iphoneos -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOS CODE_SIGNING_ALLOWED=NO
+
+XCBUILD_STATUS_IPHONE=$?
+
+if [ $XCBUILD_STATUS_IPHONE -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+fi
+
 xcodebuild -sdk macosx -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (Mac Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/macOS CODE_SIGNING_ALLOWED=NO
+
+XCBUILD_STATUS_MAC=$?
+
+if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+fi
+
 xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
 zip -r MSAL.zip framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
