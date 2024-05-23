@@ -1,6 +1,6 @@
 # We are in source directory
 
-BRANCH_NAME="$(git branch --show-current)-ci/testspm"
+BRANCH_NAME="$(git branch --show-current)-ci-testspm"
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d")
 
@@ -66,8 +66,9 @@ cd "$SAMPLE_APP_TEMP_DIR"
 
 git clone https://github.com/Azure-Samples/ms-identity-ciam-native-auth-ios-sample.git
 cd ms-identity-ciam-native-auth-ios-sample
-git switch ci/testspm
+git switch ci/testspm # fixed branch in SampleApp's repo
 git merge main
+# DJB: if git merge fails, we should return 1 and remove branch
 
 echo "Reset Sample App's Package cache"
 
@@ -79,13 +80,6 @@ xcodebuild -resolvePackageDependencies
 xcodebuild -scheme NativeAuthSampleApp -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' clean build
 
 BUILD_STATUS=$?
-
-if [ $BUILD_STATUS -ne 0 ]; then
-  echo "** BUILD FAILED **"
-  exit 1
-else
-  echo "** BUILD SUCCEEDED **"
-fi
 
 echo "Cleaning up"
 
@@ -100,3 +94,10 @@ git switch main
 
 git branch -D "$BRANCH_NAME"
 #git push origin --delete "$BRANCH_NAME"
+
+if [ $BUILD_STATUS -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+else
+  echo "** BUILD SUCCEEDED **"
+fi
