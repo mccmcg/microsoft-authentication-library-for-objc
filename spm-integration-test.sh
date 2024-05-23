@@ -20,14 +20,10 @@ CHECKSUM=$(swift package compute-checksum MSAL.zip)
 echo "=== MSAL.zip xcframework created ==="
 echo "This is the checksum: $CHECKSUM"
 
-echo "=== Modifying Package.swift. From: ==="
-
-cat Package.swift
-
 NEW_URL="https://github.com/AzureAD/microsoft-authentication-library-for-objc/raw/$BRANCH_NAME/MSAL.zip/"
 echo "Putting this: $NEW_URL"
 
-sed -i '' "s#url: \".*\"#url: \"$NEW_URL\"#" Package.swift
+sed -i '' "s#url: \"[^\"]*\"#url: \"$NEW_URL\"#" Package.swift
 sed -i '' "s#checksum: \"[^\"]*\"#checksum: \"$CHECKSUM\"#" Package.swift
 
 echo "=== Finished modifying Package.swift. Result: ==="
