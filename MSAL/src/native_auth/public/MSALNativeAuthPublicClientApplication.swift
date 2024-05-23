@@ -150,6 +150,10 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
 
     // MARK: delegate methods
 
+    public func feature1() {
+        print("Testing new public method")
+    }
+
     /// Sign up a user with a given username and password.
     /// - Parameters:
     ///   - username: Username for the new account.
