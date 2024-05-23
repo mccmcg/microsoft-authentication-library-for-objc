@@ -154,8 +154,6 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         print("Testing new public method")
     }
 
-    it wont build
-
     /// Sign up a user with a given username and password.
     /// - Parameters:
     ///   - username: Username for the new account.
