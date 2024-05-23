@@ -1,6 +1,11 @@
 # We are in source directory
 
-BRANCH_NAME="$(git branch --show-current)-ci-testspm"
+#######
+## 1 ##
+#######
+
+#BRANCH_NAME="$(git branch --show-current)-ci-testspm"
+BRANCH_NAME=ci/testspm
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d")
 
@@ -57,8 +62,12 @@ echo "Pushing MSAL.zip and Package.swift to $BRANCH_NAME"
 
 git add MSAL.zip Package.swift
 
-git commit -m "Publish Swift Package $current_date"
+git commit -m "Publish temporary Swift Package $current_date"
 git push -f origin "$BRANCH_NAME"
+
+#######
+## 2 ##
+#######
 
 echo "=== Cloning Sample App in a new directory ==="
 mkdir -p "$SAMPLE_APP_TEMP_DIR"
@@ -80,6 +89,10 @@ xcodebuild -resolvePackageDependencies
 xcodebuild -scheme NativeAuthSampleApp -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' clean build
 
 BUILD_STATUS=$?
+
+#######
+## 3 ##
+#######
 
 echo "Cleaning up"
 
