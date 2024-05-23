@@ -99,4 +99,4 @@ git fetch
 git switch main
 
 git branch -D "$BRANCH_NAME"
-git push origin --delete "$BRANCH_NAME"
+#git push origin --delete "$BRANCH_NAME"
