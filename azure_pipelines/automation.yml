@@ -48,4 +48,3 @@ jobs:
     displayName: Run SPM integration test script
     inputs:
       filePath: 'spm-integration-test.sh'
-    workingDirectory: '$(Build.SourcesDirectory)'
