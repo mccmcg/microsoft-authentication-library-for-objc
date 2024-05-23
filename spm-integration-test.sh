@@ -54,6 +54,15 @@ rm -f NativeAuthSampleApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Pac
 xcodebuild -resolvePackageDependencies
 xcodebuild -scheme NativeAuthSampleApp -configuration Release -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' clean build
 
+BUILD_STATUS=$?
+
+if [ $BUILD_STATUS -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+else
+  echo "** BUILD SUCCEEDED **"
+fi
+
 echo "Cleaning up"
 
 cd ../..
@@ -61,7 +70,9 @@ cd ../..
 rm -rf "SAMPLE_APP_TEMP_DIR" archive framework MSAL.zip
 
 git checkout -- .
-git checkout -f main
+git fetch
+#git checkout -f main
+git switch main
 # DJB: + consider using some dynamic value in the name of the branch (for example the name of the current branch or current date)
 
 git branch -D "$BRANCH_NAME"
