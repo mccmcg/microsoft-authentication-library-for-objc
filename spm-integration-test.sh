@@ -77,7 +77,12 @@ git clone https://github.com/Azure-Samples/ms-identity-ciam-native-auth-ios-samp
 cd ms-identity-ciam-native-auth-ios-sample
 git switch ci/testspm # fixed branch in SampleApp's repo
 git merge main
-# DJB: if git merge fails, we should return 1 and remove branch
+
+MEGE_STATUS=$?
+
+if [ $MERGE_STATUS -ne 0 ]; then
+  echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
+fi
 
 echo "Reset Sample App's Package cache"
 
@@ -102,15 +107,11 @@ rm -rf "SAMPLE_APP_TEMP_DIR" archive framework MSAL.zip
 
 git checkout -- .
 git fetch
-#git checkout -f main
 git switch main
 
 git branch -D "$BRANCH_NAME"
 git push origin --delete "$BRANCH_NAME"
 
-if [ $BUILD_STATUS -ne 0 ]; then
-  echo "** BUILD FAILED **"
-  exit 1
-else
-  echo "** BUILD SUCCEEDED **"
+if [ $MERGE_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ]; then
+	exit 1
 fi
