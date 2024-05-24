@@ -83,7 +83,9 @@ git merge ci/test-with-conflicts
 MEGE_STATUS=$?
 
 if [ $MERGE_STATUS -ne 0 ]; then
-  echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
+  	echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
+else
+	echo "all good"
 fi
 
 echo "Reset Sample App's Package cache"
