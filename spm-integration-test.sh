@@ -80,9 +80,9 @@ git switch ci/testspm # fixed branch in SampleApp's repo
 #git merge main
 git merge ci/test-with-conflicts
 
-MEGE_STATUS=$?
+MEGE_STATUS=$(git ls-files -u | grep -q '^')
 
-if [ $MERGE_STATUS -ne 0 ]; then
+if git ls-files -u | grep -q '^'; then
   	echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
 else
 	echo "all good"
