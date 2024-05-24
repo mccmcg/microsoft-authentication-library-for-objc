@@ -80,9 +80,10 @@ git switch ci/testspm # fixed branch in SampleApp's repo
 #git merge main
 git merge ci/test-with-conflicts
 
-MEGE_STATUS=$(git ls-files -u | grep -q '^')
+CONFLICTS=$(git ls-files -u | grep -q '^')
+CONFLICT_STATUS=$?
 
-if git ls-files -u | grep -q '^'; then
+if [ $CONFLICT_STATUS -ne 0 ]; then
   	echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
 else
 	echo "all good"
@@ -116,6 +117,6 @@ git switch main
 git branch -D "$BRANCH_NAME"
 git push origin --delete "$BRANCH_NAME"
 
-if [ $MERGE_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ]; then
+if [ $CONFLICT_STATUS -ne 0 ] || [ $BUILD_STATUS -ne 0 ]; then
 	exit 1
 fi
