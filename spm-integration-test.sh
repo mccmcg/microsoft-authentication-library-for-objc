@@ -1,7 +1,7 @@
 # We are in source directory
 
-BRANCH_NAME="$(git branch --show-current)"
-git branch --show-current
+BRANCH_NAME="$(Build.SourceBranch)-ci-testspm"
+echo $BRANCH_NAME
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
