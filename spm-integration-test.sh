@@ -75,15 +75,11 @@ cd "$SAMPLE_APP_TEMP_DIR"
 
 git clone https://github.com/Azure-Samples/ms-identity-ciam-native-auth-ios-sample.git
 cd ms-identity-ciam-native-auth-ios-sample
-git switch ci/test-with-conflicts # remove
 git switch ci/testspm # fixed branch in SampleApp's repo
-#git merge main
-git merge ci/test-with-conflicts
+git merge main
 
 if git ls-files -u | grep -q '^'; then
   	echo "[Sample App] Merge main into ci/testspm failed due to conflicts"
-else
-	echo "all good"
 fi
 
 echo "Reset Sample App's Package cache"
