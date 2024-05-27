@@ -1,7 +1,10 @@
 # We are in source directory
 
-BRANCH_NAME="ci/testspm"
+#BRANCH_NAME="ci/testspm"
 #BRANCH_NAME="$(Build.SourceBranch)-ci-testspm"
+UUID=$(uuidgen)
+BRANCH_NAME="${UUID}-ci-testspm"
+echo "UUID string: $BRANCH_NAME"
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
@@ -33,7 +36,7 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   exit 1
 fi
 
-xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
+xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework -quiet
 zip -r MSAL.zip framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
 
