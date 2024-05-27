@@ -1,8 +1,7 @@
 # We are in source directory
 
-BRANCH_NAME="$(Build.SourceBranch)-ci-testspm"
-echo 'Build.SourceBranchName:' $BRANCH_NAME
-#echo 'Build.SourceBranch:' $(Build.SourceBranch)
+BRANCH_NAME="ci/testspm"
+#BRANCH_NAME="$(Build.SourceBranch)-ci-testspm"
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
