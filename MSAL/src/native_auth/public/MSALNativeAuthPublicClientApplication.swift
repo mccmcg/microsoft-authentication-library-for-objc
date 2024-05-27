@@ -89,6 +89,12 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         try super.init(configuration: config)
     }
 
+
+
+    public func feature1() {
+        print("test new feature")
+    }
+
     /// Initialize a MSALNativePublicClientApplication.
     /// - Parameters:
     ///   - clientId: The client ID of the application, this should come from the app developer portal.
