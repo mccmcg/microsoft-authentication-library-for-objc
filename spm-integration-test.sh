@@ -12,32 +12,36 @@ current_date=$(date +"%Y-%m-%d %H:%M:%S")
 #######
 
 git checkout -b "$BRANCH_NAME"
-rm -rf archive framework MSAL.zip 
+rm -rf archive framework MSAL.zip
 
-xcodebuild -sdk iphonesimulator -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOSSimulator CODE_SIGNING_ALLOWED=NO -quiet
+echo "DJB: Build for simulator"
+
+xcodebuild -sdk iphonesimulator -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOSSimulator CODE_SIGNING_ALLOWED=NO -quiet > build.log 2>&1
 XCBUILD_STATUS_SIM=$?
 if [ $XCBUILD_STATUS_SIM -ne 0 ]; then
   echo "** BUILD FAILED **"
   exit 1
 fi
 
-xcodebuild -sdk iphoneos -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOS CODE_SIGNING_ALLOWED=NO -quiet
+echo "DJB: Build for iOS"
+
+xcodebuild -sdk iphoneos -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (iOS Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/iOS CODE_SIGNING_ALLOWED=NO -quiet > build.log 2>&1
 XCBUILD_STATUS_IPHONE=$?
 if [ $XCBUILD_STATUS_IPHONE -ne 0 ]; then
   echo "** BUILD FAILED **"
   exit 1
 fi
 
-xcodebuild -sdk macosx -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (Mac Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/macOS CODE_SIGNING_ALLOWED=NO -quiet
+echo "DJB: Build for Mac"
+
+xcodebuild -sdk macosx -configuration Release -workspace MSAL.xcworkspace -scheme "MSAL (Mac Framework)" archive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES -archivePath archive/macOS CODE_SIGNING_ALLOWED=NO -quiet > build.log 2>&1
 XCBUILD_STATUS_MAC=$?
 if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   echo "** BUILD FAILED **"
   exit 1
 fi
 
-echo "** starting to build the xcframework **" #djb: remove
-
-xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework #> build.log 2>&1
+xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework > build.log 2>&1
 XCBUILD_STATUS_FRAMEWORK=$?
 if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
   echo "** BUILD FAILED **"
