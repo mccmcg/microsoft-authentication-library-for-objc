@@ -35,9 +35,9 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   exit 1
 fi
 
-echo "** starting to build the xcframework **"
+echo "** starting to build the xcframework **" #djb: remove
 
-xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework > build.log 2>&1
+xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework #> build.log 2>&1
 XCBUILD_STATUS_FRAMEWORK=$?
 if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
   echo "** BUILD FAILED **"
