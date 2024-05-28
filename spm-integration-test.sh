@@ -37,6 +37,12 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
 fi
 
 xcodebuild -create-xcframework -quiet -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
+XCBUILD_STATUS_FRAMEWORK=$?
+if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
+  echo "** BUILD FAILED **"
+  exit 1
+fi
+
 zip -r MSAL.zip framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
 
