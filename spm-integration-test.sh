@@ -36,7 +36,7 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   exit 1
 fi
 
-xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework -quiet
+xcodebuild -create-xcframework -quiet -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
 zip -r MSAL.zip framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
 
