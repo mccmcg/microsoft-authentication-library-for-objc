@@ -36,7 +36,7 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   exit 1
 fi
 
-xcodebuild -create-xcframework -quiet -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
+xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
 XCBUILD_STATUS_FRAMEWORK=$?
 if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
   echo "** BUILD FAILED **"
