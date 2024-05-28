@@ -4,7 +4,6 @@
 #BRANCH_NAME="$(Build.SourceBranch)-ci-testspm"
 UUID=$(uuidgen)
 BRANCH_NAME="${UUID}-ci-testspm"
-echo "UUID string: $BRANCH_NAME"
 SAMPLE_APP_TEMP_DIR="NativeAuthSampleAppTemp"
 current_date=$(date +"%Y-%m-%d %H:%M:%S")
 
@@ -36,17 +35,19 @@ if [ $XCBUILD_STATUS_MAC -ne 0 ]; then
   exit 1
 fi
 
-xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework
+echo "** starting to build the xcframework **"
+
+xcodebuild -create-xcframework -framework archive/iOSSimulator.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/iOS.xcarchive/Products/Library/Frameworks/MSAL.framework -framework archive/macOS.xcarchive/Products/Library/Frameworks/MSAL.framework -output framework/MSAL.xcframework > build.log 2>&1
 XCBUILD_STATUS_FRAMEWORK=$?
 if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
   echo "** BUILD FAILED **"
   exit 1
 fi
 
-zip -r MSAL.zip no-existing/MSAL.xcframework -y -v #framework/MSAL.xcframework -y -v
+zip -r MSAL.zip framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
 if [ -z "$CHECKSUM" ]; then
-  echo "** ERROR RETRIEVING THE CHECKSUM **"
+  echo "** ERROR CHECKSUM **"
   exit 1
 fi
 
@@ -55,13 +56,12 @@ NEW_URL="https://github.com/AzureAD/microsoft-authentication-library-for-objc/ra
 sed -i '' "s#url: \"[^\"]*\"#url: \"$NEW_URL\"#" Package.swift
 sed -i '' "s#checksum: \"[^\"]*\"#checksum: \"$CHECKSUM\"#" Package.swift
 
-echo "=== Finished modifying Package.swift. Result: ==="
-cat Package.swift # DJB: remove
-
 git add MSAL.zip Package.swift
 
 git commit -m "Publish temporary Swift Package $current_date"
 git push -f origin "$BRANCH_NAME"
+
+echo "MSAL.zip pushed to temporary branch: $BRANCH_NAME"
 
 #######
 ## 2 ##
@@ -100,5 +100,6 @@ git branch -D "$BRANCH_NAME"
 git push origin --delete "$BRANCH_NAME"
 
 if $BUILD_STATUS -ne 0 ]; then
+	echo "** Sample App Build error **"
 	exit 1
 fi
