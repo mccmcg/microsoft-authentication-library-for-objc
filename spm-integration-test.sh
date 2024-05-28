@@ -43,8 +43,12 @@ if [ $XCBUILD_STATUS_FRAMEWORK -ne 0 ]; then
   exit 1
 fi
 
-zip -r MSAL.zip framework/MSAL.xcframework -y -v
+zip -r MSAL.zip no-existing/MSAL.xcframework -y -v #framework/MSAL.xcframework -y -v
 CHECKSUM=$(swift package compute-checksum MSAL.zip)
+if [ -z "$CHECKSUM" ]; then
+  echo "** ERROR RETRIEVING THE CHECKSUM **"
+  exit 1
+fi
 
 NEW_URL="https://github.com/AzureAD/microsoft-authentication-library-for-objc/raw/$BRANCH_NAME/MSAL.zip/"
 
