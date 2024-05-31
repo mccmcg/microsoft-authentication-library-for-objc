@@ -1,3 +1,6 @@
+## [1.3.4]
+* Update Native Auth logging levels for improved clarity and consistency.
+
 ## [1.3.3]
 * Update common core submodule.
 * Automation improvements.
