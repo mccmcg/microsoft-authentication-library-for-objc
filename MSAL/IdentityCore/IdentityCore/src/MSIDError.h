@@ -32,6 +32,7 @@ extern NSString * _Nonnull MSIDHTTPResponseCodeKey;
 extern NSString * _Nonnull MSIDUserDisplayableIdkey;
 extern NSString * _Nonnull MSIDHomeAccountIdkey;
 extern NSString * _Nonnull MSIDBrokerVersionKey;
+extern NSString * _Nonnull MSIDForgottenPassword;
 
 /*!
  ADAL and MSID use different error domains and error codes.
@@ -333,6 +334,7 @@ typedef NS_ENUM(NSInteger, MSIDErrorCode)
     MSIDErrorBrokerAppIsInactive = -51902,
     MSIDErrorBrokerAppIsInBackground = -51903,
 
+    MSIDForgottenPasswordResponse    = -5140001,
 };
 
 extern NSError * _Nonnull MSIDCreateError(NSString * _Nonnull domain, NSInteger code, NSString * _Nullable errorDescription, NSString * _Nullable oauthError, NSString * _Nullable subError, NSError * _Nullable underlyingError, NSUUID * _Nullable correlationId, NSDictionary * _Nullable additionalUserInfo, BOOL logErrorDescription);

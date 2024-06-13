@@ -43,7 +43,8 @@ static NSSet *s_recoverableErrorCode;
                              MSIDErrorDomain : MSALErrorDomain,
                              MSIDOAuthErrorDomain : MSALErrorDomain,
                              MSIDKeychainErrorDomain : NSOSStatusErrorDomain,
-                             MSIDHttpErrorCodeDomain : MSALErrorDomain
+                             MSIDHttpErrorCodeDomain : MSALErrorDomain,
+                             MSIDForgottenPassword : MSALForgottenPassword
                              };
 
     s_errorCodeMapping = @{

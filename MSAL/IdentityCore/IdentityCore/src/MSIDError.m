@@ -35,6 +35,7 @@ NSString *MSIDUserDisplayableIdkey = @"MSIDUserDisplayableIdkey";
 NSString *MSIDHomeAccountIdkey = @"MSIDHomeAccountIdkey";
 NSString *MSIDBrokerVersionKey = @"MSIDBrokerVersionKey";
 NSString *MSIDServerUnavailableStatusKey = @"MSIDServerUnavailableStatusKey";
+NSString *MSIDForgottenPassword = @"MSIDForgottenPassword";
 
 NSString *MSIDErrorDomain = @"MSIDErrorDomain";
 NSString *MSIDOAuthErrorDomain = @"MSIDOAuthErrorDomain";
@@ -216,6 +217,9 @@ NSDictionary* MSIDErrorDomainsAndCodes(void)
                       ],
               MSIDHttpErrorCodeDomain : @[
                       @(MSIDErrorServerUnhandledResponse)
+                      ],
+                      MSIDForgottenPassword : @[
+                      @(MSIDForgottenPasswordResponse)
                       ]
 
               // TODO: add new codes here
