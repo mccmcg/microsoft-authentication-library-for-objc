@@ -74,7 +74,7 @@ static NSSet *s_recoverableErrorCode;
                                    @(MSIDErrorNoMainViewController) : @(MSALInternalErrorNoViewController),
                                    @(MSIDErrorAttemptToOpenURLFromExtension): @(MSALInternalErrorAttemptToOpenURLFromExtension),
                                    @(MSIDErrorUINotSupportedInExtension): @(MSALInternalErrorUINotSupportedInExtension),
-
+                                   @(MSIDErrorInsufficientDeviceStrength): @(MSALErrorInsufficientDeviceStrength),
                                    // Broker errors
                                    @(MSIDErrorBrokerResponseNotReceived): @(MSALInternalErrorBrokerResponseNotReceived),
                                    @(MSIDErrorBrokerNoResumeStateFound): @(MSALInternalErrorBrokerNoResumeStateFound),
@@ -113,6 +113,14 @@ static NSSet *s_recoverableErrorCode;
                                    @(MSIDErrorJITTroubleshootingAcquireToken) : @(MSALErrorJITTroubleshootingAcquireToken),
                                    @(MSIDErrorDeviceNotPSSORegistered) : @(MSALErrorDeviceNotPSSORegistered),
                                    @(MSIDErrorPSSOKeyIdMismatch) : @(MSALErrorPSSOKeyIdMismatch),
+                                   @(MSIDErrorJITErrorHandlingConfigNotFound) : @(MSALErrorJITErrorHandlingConfigNotFound),
+                                   @(MSIDErrorPSSOBiometricPolicyMismatch) : @(MSALErrorPSSOBiometricPolicyMismatch),
+                                   @(MSIDErrorPSSOInvalidPasskeyExtension) : @(MSALErrorPSSOInvalidPasskeyExtension),
+                                   @(MSIDErrorPSSOSaveLoginConfigFailure) :@(MSALErrorPSSOSaveLoginConfigFailure),
+                                   @(MSIDErrorPSSOPasskeyLAError) :@(MSALErrorPSSOPasskeyLAError),
+                                   @(MSIDErrorPSSOBiometricsNotAvailable): @(MSALErrorPSSOBiometricsNotAvailable),
+                                   @(MSIDErrorPSSOBiometricsNotEnrolled): @(MSALErrorPSSOBiometricsNotEnrolled),
+                                
                                    
                                    // Oauth2 errors
                                    @(MSIDErrorServerOauth) : @(MSALInternalErrorAuthorizationFailed),
@@ -130,7 +138,8 @@ static NSSet *s_recoverableErrorCode;
                                    @(MSIDErrorServerError) : @(MSALErrorServerError),
                                    @(MSIDErrorServerInvalidState) : @(MSALInternalErrorInvalidState),
                                    @(MSIDErrorServerProtectionPoliciesRequired) : @(MSALErrorServerProtectionPoliciesRequired),
-                                   @(MSIDErrorServerUnhandledResponse) : @(MSALInternalErrorUnhandledResponse)
+                                   @(MSIDErrorServerUnhandledResponse) : @(MSALInternalErrorUnhandledResponse),
+                                   @(MSIDErrorUnexpectedHttpResponse) : @(MSALInternalErrorUnexpectedHttpResponse)
                                    }
                            };
     
@@ -139,13 +148,16 @@ static NSSet *s_recoverableErrorCode;
                              MSIDHTTPResponseCodeKey : MSALHTTPResponseCodeKey,
                              MSIDCorrelationIdKey : MSALCorrelationIDKey,
                              MSIDErrorDescriptionKey : MSALErrorDescriptionKey,
+                             MSIDSTSErrorCodesKey : MSALSTSErrorCodesKey,
                              MSIDOAuthErrorKey: MSALOAuthErrorKey,
                              MSIDOAuthSubErrorKey: MSALOAuthSubErrorKey,
+                             MSIDOAuthSubErrorDescriptionKey: MSALOAuthSubErrorDescriptionKey,
                              MSIDDeclinedScopesKey: MSALDeclinedScopesKey,
                              MSIDGrantedScopesKey: MSALGrantedScopesKey,
                              MSIDUserDisplayableIdkey: MSALDisplayableUserIdKey,
                              MSIDBrokerVersionKey: MSALBrokerVersionKey,
-                             MSIDHomeAccountIdkey: MSALHomeAccountIdKey
+                             MSIDHomeAccountIdkey: MSALHomeAccountIdKey,
+                             MSIDThrottlingCacheHitKey: MSALThrottlingCacheHitKey
                              };
     
     s_recoverableErrorCode = [[NSSet alloc] initWithObjects:@(MSALErrorWorkplaceJoinRequired), @(MSALErrorInteractionRequired), @(MSALErrorServerDeclinedScopes), @(MSALErrorServerProtectionPoliciesRequired), @(MSALErrorUserCanceled), nil];
@@ -248,8 +260,12 @@ static NSSet *s_recoverableErrorCode;
     if (errorDescription) msalUserInfo[MSALErrorDescriptionKey] = errorDescription;
     if (oauthError) msalUserInfo[MSALOAuthErrorKey] = oauthError;
     if (subError) msalUserInfo[MSALOAuthSubErrorKey] = subError;
-    
-    if (underlyingError) msalUserInfo[NSUnderlyingErrorKey] = [MSALErrorConverter msalErrorFromMsidError:underlyingError];
+        
+    if (underlyingError) {
+        msalUserInfo[NSUnderlyingErrorKey] = [MSALErrorConverter msalErrorFromMsidError:underlyingError];
+        NSArray<NSNumber *>* stsErrorCodes = underlyingError.userInfo[MSIDSTSErrorCodesKey];
+        if (stsErrorCodes) msalUserInfo[MSALSTSErrorCodesKey] = stsErrorCodes;
+    }
     
     msalUserInfo[MSALInternalErrorCodeKey] = internalCode;
 

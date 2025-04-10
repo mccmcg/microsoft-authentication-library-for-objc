@@ -28,6 +28,7 @@ enum MSALNativeAuthRequestParametersKey: String {
     case clientId = "client_id"
     case challengeType = "challenge_type"
     case grantType = "grant_type"
+    case id = "id"
     case username
     case email
     case password
@@ -40,4 +41,5 @@ enum MSALNativeAuthRequestParametersKey: String {
     case newPassword = "new_password"
     case clientInfo = "client_info"
     case refreshToken = "refresh_token"
+    case claims
 }

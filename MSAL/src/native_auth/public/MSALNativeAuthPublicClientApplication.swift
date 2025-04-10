@@ -49,8 +49,8 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
 
     let controllerFactory: MSALNativeAuthControllerBuildable
     let inputValidator: MSALNativeAuthInputValidating
-    private let internalChallengeTypes: [MSALNativeAuthInternalChallengeType]
 
+    private let internalChallengeTypes: [MSALNativeAuthInternalChallengeType]
     private var cacheAccessorFactory: MSALNativeAuthCacheAccessorBuildable
     lazy var cacheAccessor: MSALNativeAuthCacheAccessor = {
         return cacheAccessorFactory.makeCacheAccessor(tokenCache: tokenCache, accountMetadataCache: accountMetadataCache)
@@ -74,7 +74,8 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         var nativeConfiguration = try MSALNativeAuthConfiguration(
             clientId: config.clientId,
             authority: ciamAuthority,
-            challengeTypes: internalChallengeTypes
+            challengeTypes: internalChallengeTypes,
+            redirectUri: config.redirectUri
         )
         nativeConfiguration.sliceConfig = config.sliceConfig
 
@@ -108,7 +109,8 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         let nativeConfiguration = try MSALNativeAuthConfiguration(
             clientId: clientId,
             authority: ciamAuthority,
-            challengeTypes: internalChallengeTypes
+            challengeTypes: internalChallengeTypes,
+            redirectUri: redirectUri
         )
 
         self.controllerFactory = MSALNativeAuthControllerFactory(config: nativeConfiguration)
@@ -127,10 +129,6 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
 
         // we need to bypass redirect URI validation because we don't need a redirect URI for Native Auth scenarios
         configuration.bypassRedirectURIValidation = redirectUri == nil
-        let defaultRedirectUri = String(format: "msauth.%@://auth", Bundle.main.bundleIdentifier ?? "<bundle_id>")
-        // we need to set a default redirect URI value to ensure IdentityCore checks the bypassRedirectURIValidation flag
-        configuration.redirectUri = redirectUri ?? defaultRedirectUri
-
         try super.init(configuration: configuration)
     }
 
@@ -138,7 +136,8 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         controllerFactory: MSALNativeAuthControllerBuildable,
         cacheAccessorFactory: MSALNativeAuthCacheAccessorBuildable,
         inputValidator: MSALNativeAuthInputValidating,
-        internalChallengeTypes: [MSALNativeAuthInternalChallengeType]
+        internalChallengeTypes: [MSALNativeAuthInternalChallengeType],
+        configuration: MSALPublicClientApplicationConfig
     ) {
         self.controllerFactory = controllerFactory
         self.cacheAccessorFactory = cacheAccessorFactory
@@ -150,26 +149,20 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
 
     // MARK: delegate methods
 
-    /// Sign up a user with a given username and password.
+    /// Sign up a user using parameters.
     /// - Parameters:
-    ///   - username: Username for the new account.
-    ///   - password: Optional. Password to be used for the new account.
-    ///   - attributes: Optional. User attributes to be used during account creation.
-    ///   - correlationId: Optional. UUID to correlate this request with the server for debugging.
+    ///   - parameters: Parameters used for the Sign Up flow.
     ///   - delegate: Delegate that receives callbacks for the Sign Up flow.
     public func signUp(
-        username: String,
-        password: String? = nil,
-        attributes: [String: Any]? = nil,
-        correlationId: UUID? = nil,
+        parameters: MSALNativeAuthSignUpParameters,
         delegate: SignUpStartDelegate
     ) {
         Task {
             let controllerResponse = await signUpInternal(
-                username: username,
-                password: password,
-                attributes: attributes,
-                correlationId: correlationId
+                username: parameters.username,
+                password: parameters.password,
+                attributes: parameters.attributes,
+                correlationId: parameters.correlationId
             )
 
             let delegateDispatcher = SignUpStartDelegateDispatcher(delegate: delegate, telemetryUpdate: controllerResponse.telemetryUpdate)
@@ -191,26 +184,49 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
         }
     }
 
-    /// Sign in a user with a given username and password.
+    /// Sign up a user with a given username and password.
     /// - Parameters:
-    ///   - username: Username for the account
-    ///   - password: Optional. Password for the account.
-    ///   - scopes: Optional. Permissions you want included in the access token received after sign in flow has completed.
+    ///   - username: Username for the new account.
+    ///   - password: Optional. Password to be used for the new account.
+    ///   - attributes: Optional. User attributes to be used during account creation.
     ///   - correlationId: Optional. UUID to correlate this request with the server for debugging.
-    ///   - delegate: Delegate that receives callbacks for the Sign In flow.
-    public func signIn(
+    ///   - delegate: Delegate that receives callbacks for the Sign Up flow.
+    @available(*, deprecated, message: "This method is now deprecated. Use the method 'signUp(parameters:)' instead.")
+    public func signUp(
         username: String,
         password: String? = nil,
-        scopes: [String]? = nil,
+        attributes: [String: Any]? = nil,
         correlationId: UUID? = nil,
+        delegate: SignUpStartDelegate
+    ) {
+        Task {
+            let parameters = MSALNativeAuthSignUpParameters(username: username)
+            parameters.password = password
+            parameters.attributes = attributes
+            parameters.correlationId = correlationId
+            signUp(
+                parameters: parameters,
+                delegate: delegate
+            )
+        }
+    }
+
+    /// Sign in a user using parameters.
+    /// - Parameters:
+    ///   - parameters: Parameters used for the Sign In flow.
+    ///   - delegate: Delegate that receives callbacks for the Sign In flow.
+    public func signIn(
+        parameters: MSALNativeAuthSignInParameters,
         delegate: SignInStartDelegate
     ) {
         Task {
+            let claimsRequestJson = parameters.claimsRequest?.jsonString()
             let controllerResponse = await signInInternal(
-                username: username,
-                password: password,
-                scopes: scopes,
-                correlationId: correlationId
+                username: parameters.username,
+                password: parameters.password,
+                scopes: parameters.scopes,
+                claimsRequestJson: claimsRequestJson,
+                correlationId: parameters.correlationId
             )
 
             let delegateDispatcher = SignInStartDelegateDispatcher(delegate: delegate, telemetryUpdate: controllerResponse.telemetryUpdate)
@@ -230,22 +246,48 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
                 await delegateDispatcher.dispatchSignInCompleted(result: result, correlationId: controllerResponse.correlationId)
             case .error(let error):
                 await delegate.onSignInStartError(error: error)
+            case .awaitingMFA(let newState):
+                await delegateDispatcher.dispatchAwaitingMFA(newState: newState, correlationId: controllerResponse.correlationId)
             }
         }
     }
 
-    /// Reset the password for a given username.
+    /// Sign in a user with a given username and password.
     /// - Parameters:
-    ///   - username: Username for the account.
+    ///   - username: Username for the account
+    ///   - password: Optional. Password for the account.
+    ///   - scopes: Optional. Permissions you want included in the access token received after sign in flow has completed.
     ///   - correlationId: Optional. UUID to correlate this request with the server for debugging.
+    ///   - delegate: Delegate that receives callbacks for the Sign In flow.
+    @available(*, deprecated, message: "This method is now deprecated. Use the method 'signIn(parameters:)' instead.")
+    public func signIn(
+        username: String,
+        password: String? = nil,
+        scopes: [String]? = nil,
+        correlationId: UUID? = nil,
+        delegate: SignInStartDelegate
+    ) {
+        let parameters = MSALNativeAuthSignInParameters(username: username)
+        parameters.password = password
+        parameters.scopes = scopes
+        parameters.correlationId = correlationId
+        signIn(
+            parameters: parameters,
+            delegate: delegate
+        )
+    }
+
+    /// Reset the password using parameters
+    /// - Parameters:
+    ///   - parameters: Parameters used for the Reset Password flow.
     ///   - delegate: Delegate that receives callbacks for the Reset Password flow.
     public func resetPassword(
-        username: String,
-        correlationId: UUID? = nil,
+        parameters: MSALNativeAuthResetPasswordParameters,
         delegate: ResetPasswordStartDelegate
     ) {
         Task {
-            let controllerResponse = await resetPasswordInternal(username: username, correlationId: correlationId)
+            let controllerResponse = await resetPasswordInternal(username: parameters.username,
+                                                                 correlationId: parameters.correlationId)
 
             let delegateDispatcher = ResetPasswordStartDelegateDispatcher(delegate: delegate, telemetryUpdate: controllerResponse.telemetryUpdate)
 
@@ -262,6 +304,25 @@ public final class MSALNativeAuthPublicClientApplication: MSALPublicClientApplic
                 await delegate.onResetPasswordStartError(error: error)
             }
         }
+    }
+
+    /// Reset the password for a given username.
+    /// - Parameters:
+    ///   - username: Username for the account.
+    ///   - correlationId: Optional. UUID to correlate this request with the server for debugging.
+    ///   - delegate: Delegate that receives callbacks for the Reset Password flow.
+    @available(*, deprecated, message: "This method is now deprecated. Use the method 'resetPassword(parameters:)' instead.")
+    public func resetPassword(
+        username: String,
+        correlationId: UUID? = nil,
+        delegate: ResetPasswordStartDelegate
+    ) {
+        let parameters = MSALNativeAuthResetPasswordParameters(username: username)
+        parameters.correlationId = correlationId
+        resetPassword(
+            parameters: parameters,
+            delegate: delegate
+        )
     }
 
     /// Retrieve the current signed in account from the cache.

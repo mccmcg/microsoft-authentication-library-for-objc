@@ -89,6 +89,7 @@
     NSUUID *correlationId = [NSUUID UUID];
     NSDictionary *httpHeaders = @{@"fake header key" : @"fake header value"};
     NSString *httpResponseCode = @"-99999";
+    NSArray<NSNumber *> *stsErrorCodes = @[@123];
     
     NSError *msalError = [MSALErrorConverter errorWithDomain:MSIDKeychainErrorDomain
                                                         code:errorCode
@@ -99,6 +100,8 @@
                                                correlationId:correlationId
                                                     userInfo:@{MSIDHTTPHeadersKey : httpHeaders,
                                                                MSIDHTTPResponseCodeKey : httpResponseCode,
+                                                               MSIDThrottlingCacheHitKey : @1,
+                                                               MSIDSTSErrorCodesKey : stsErrorCodes,
                                                                @"additional_user_info": @"unmapped_userinfo"}
                                               classifyErrors:YES
                                           msalOauth2Provider:nil
@@ -121,6 +124,30 @@
     XCTAssertEqualObjects(msalError.userInfo[MSALHTTPResponseCodeKey], httpResponseCode);
     XCTAssertNil(msalError.userInfo[MSIDHTTPResponseCodeKey]);
     XCTAssertEqualObjects(msalError.userInfo[@"additional_user_info"], @"unmapped_userinfo");
+    XCTAssertTrue(msalError.userInfo[MSALThrottlingCacheHitKey]);
+    XCTAssertEqualObjects(msalError.userInfo[MSALSTSErrorCodesKey], stsErrorCodes);
+}
+
+- (void)testErrorConversion_ErrorCodesAreAlsoRetrievedFromUnderlyingError_ErrorShouldBeParsedCorrectly {
+    NSArray<NSNumber *> *stsErrorCodes = @[@123];
+    NSError *underlyingError = [NSError errorWithDomain:NSOSStatusErrorDomain code:errSecItemNotFound userInfo:@{MSIDSTSErrorCodesKey : stsErrorCodes}];
+    
+    
+    NSError *msalError = [MSALErrorConverter errorWithDomain:MSIDKeychainErrorDomain
+                                                        code:1
+                                            errorDescription:@"description"
+                                                  oauthError:@"oauthError"
+                                                    subError:@"subError"
+                                             underlyingError:underlyingError
+                                               correlationId:[NSUUID UUID]
+                                                    userInfo:nil
+                                              classifyErrors:YES
+                                          msalOauth2Provider:nil
+                                                  authScheme:[MSALAuthenticationSchemeBearer new]
+                                                  popManager:nil];
+    
+    XCTAssertNotNil(msalError);
+    XCTAssertEqualObjects(msalError.userInfo[MSALSTSErrorCodesKey], stsErrorCodes);
 }
 
 - (void)testErrorConversion_whenUnclassifiedInternalMSALErrorPassed_shouldMapToInternal
@@ -151,6 +178,7 @@
     XCTAssertEqualObjects(msalError.userInfo[MSALOAuthErrorKey], oauthError);
     XCTAssertEqualObjects(msalError.userInfo[MSALOAuthSubErrorKey], subError);
     XCTAssertEqualObjects(msalError.userInfo[MSALInternalErrorCodeKey], @(-42400));
+    XCTAssertFalse([msalError.userInfo.allKeys containsObject: MSALSTSErrorCodesKey]);
 }
 
 - (void)testErrorConversion_whenUnclassifiedInternalMSALErrorPassed_andErrorDescriptionPassedInDictionary_shouldMapToInternal_andPreserveErrorDescription
@@ -262,6 +290,7 @@
                                                correlationId:correlationId
                                                     userInfo:@{MSIDHTTPHeadersKey : httpHeaders,
                                                                MSIDHTTPResponseCodeKey : httpResponseCode,
+                                                               MSIDThrottlingCacheHitKey: @1,
                                                                @"additional_user_info": @"unmapped_userinfo",
                                                                MSIDInvalidTokenResultKey : [self testTokenResult]}
                                               classifyErrors:YES
@@ -291,7 +320,7 @@
     XCTAssertNotNil(msalError.userInfo[MSALInvalidResultKey]);
     MSALResult *result = msalError.userInfo[MSALInvalidResultKey];
     XCTAssertEqualObjects(result.accessToken, @"access-token");
-    
+    XCTAssertTrue(msalError.userInfo[MSALThrottlingCacheHitKey]);
     NSError *mappedUnderlyingError = msalError.userInfo[NSUnderlyingErrorKey];
     XCTAssertEqualObjects(mappedUnderlyingError.domain, MSALErrorDomain);
     XCTAssertEqual(mappedUnderlyingError.code, MSALErrorInternal);

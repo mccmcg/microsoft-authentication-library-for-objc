@@ -25,84 +25,28 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'macOS-13'
+  vmImage: 'macOS-14'
 
 jobs:
 - job: ui_automation
-  displayName: Run MSAL UI automation
+  displayName: 'Run MSAL UI automation'
   timeoutInMinutes: 360
   cancelTimeoutInMinutes: 5
   workspace:
     clean: all
-  
+
   steps:
-
-  - checkout: self
-    clean: true
-    submodules: true
-    fetchDepth: 1
-    persistCredentials: true
-    path: s
+  - script: |
+      system_profiler SPHardwareDataType | grep "Processor Name"
+    displayName: 'Check System Information'
     
-  - task: Bash@3
-    displayName: 'Select Xcode version'
-    inputs:
-      targetType: 'inline'
-      script: '/bin/bash -c "sudo xcode-select -s /Applications/Xcode_15.0.1.app"'
-  
-  - task: Bash@3
-    displayName: Go to project folder
-    inputs:
-      targetType: 'inline'
-      script: |        
-        cd $(Agent.BuildDirectory)/s
-  
-  - script: 'gem install xcpretty'
-    displayName: 'Install xcpretty'
-
-
-  - task: DownloadSecureFile@1
-    name: configuration
-    displayName: 'Get Automation conf.json'
-    inputs:
-      secureFile: 'broker-automation-conf.json'
-  
-  - task: Bash@3
-    displayName: Build for testing
-    inputs:
-      targetType: 'inline'
-      script: |
-        mv $(configuration.secureFilePath) MSAL/test/automation/conf.json
-        ruby TestRubyFile.rb
-        xcodebuild build-for-testing \
-          -workspace MSAL.xcworkspace \
-          -scheme "MSAL Test Automation (iOS)" \
-          -sdk iphonesimulator \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
-          -derivedDataPath 'build' \
-          | tee xcodebuild.log \
-          | xcpretty -c
-
-  - task: Bash@3
-    displayName: Run automations
-    inputs:
-      targetType: 'inline'
-      script: |
-        ls build/Build/Products/
-        xcodebuild test-without-building \
-            -xctestrun 'build/Build/Products/MSAL Test Automation (iOS)_iphonesimulator17.0-x86_64.xctestrun' \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.2' \
-            -retry-tests-on-failure \
-            -parallel-testing-enabled NO \
-            -resultBundlePath '$(Agent.BuildDirectory)/s/test_output/report.xcresult'       
-
-  # https://learn.microsoft.com/en-us/azure/devops/pipelines/artifacts/pipeline-artifacts?view=azure-devops&tabs=yaml#q-can-i-delete-pipeline-artifacts-when-re-running-failed-jobs
-  - task: PublishPipelineArtifact@1
-    condition: succeededOrFailed()
-    inputs:
-      targetPath: '$(Agent.BuildDirectory)/s/test_output/'
-      artifactName: 'TestOutputs Attempt - $(System.StageAttempt)'
-      publishLocation: 'pipeline'
+  - template: templates/tests-with-conf-file.yml
+    parameters:
+      schema: 'MSAL Test Automation (iOS)'
+      full_path: 'build/Build/Products/MSAL Test Automation (iOS)_iphonesimulator18.1-x86_64.xctestrun'
+      destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.1'
+      sdk: 'iphonesimulator'
+      retry_tests: 'true'
 
   - task: UsePythonVersion@0
     condition: failed()
@@ -142,6 +86,84 @@ jobs:
         pipeline_uri = "https://identitydivision.visualstudio.com/IDDP/_build/results?buildId=$(Build.BuildId)&view=logs"
         git_commit = "$(Build.SourceVersionMessage) [$(Build.SourceVersion)] "
         issue_title = "Automation tests failure"
-        issue_body = '''@AzureAD/appleidentity \nAutomation failed for [$(repositoryName)]({0}) ran against commit : {1} \n Pipeline URL : [{2}]({2})'''.format('$(Build.Repository.Uri)', git_commit, pipeline_uri) 
+        issue_body = '''@AzureAD/appleidentity \nAutomation failed for [$(repositoryName)]({0}) ran against commit : {1} \n Pipeline URL : [{2}]({2})'''.format('$(Build.Repository.Uri)', git_commit, pipeline_uri)
         github.create_issue(github_org, repo, issue_title, issue_body, labels=['automation failure'])
+
+- job: e2e_test_native_auth_ios
+  displayName: 'Run MSAL E2E tests for iOS native auth'
+  timeoutInMinutes: 30
+  cancelTimeoutInMinutes: 5
+  workspace:
+    clean: all
+
+  steps:
+  - template: templates/tests-with-conf-file.yml
+    parameters:
+      schema: 'MSAL iOS Native Auth E2E Tests'
+      full_path: 'build/Build/Products/MSAL iOS Native Auth E2E Tests_MSAL iOS Native Auth E2E Tests_iphonesimulator18.1-x86_64.xctestrun'
+      destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.1'
+      sdk: 'iphonesimulator'
+      retry_tests: 'false'
+
+- job: e2e_test_native_auth_mac
+  displayName: 'Run MSAL E2E tests for macOS native auth'
+  timeoutInMinutes: 30
+  cancelTimeoutInMinutes: 5
+  workspace:
+    clean: all
+
+  steps:
+  - template: templates/tests-with-conf-file.yml
+    parameters:
+      schema: 'MSAL Mac Native Auth E2E Tests'
+      full_path: 'build/Build/Products/MSAL Mac Native Auth E2E Tests_MSAL Mac Native Auth E2E Tests_macosx15.1-x86_64.xctestrun'
+      destination: 'platform=macOS'
+      sdk: 'macosx'
+      retry_tests: 'false'
+
+- job: cocoapods_lib_lint
+  displayName: Run Cocoapods lib lint
+  timeoutInMinutes: 30
+  cancelTimeoutInMinutes: 5
+  strategy:
+    maxParallel: 2
+    matrix:
+      STATIC_LIBRARY:
+        args: "--fail-fast --allow-warnings --use-static-frameworks"
+      DYNAMIC_LIBRARY:
+        args: "--fail-fast --allow-warnings"
+  workspace:
+    clean: all
   
+  steps:
+
+  - checkout: self
+    clean: true
+    submodules: true
+    fetchDepth: 1
+    persistCredentials: true
+    path: s
+
+  - task: Bash@3
+    displayName: Replace HEADER_SEARCH_PATHS for NativeAuth subspec in MSAL.podspec
+    inputs:
+      targetType: 'inline'
+      script: |
+        sed -i '' 's/"$SRCROOT\/MSAL"/__dir__/' MSAL.podspec
+      workingDirectory: '$(Build.SourcesDirectory)'
+
+  - task: Bash@3
+    displayName: Run pod lib lint
+    inputs:
+      targetType: 'inline'
+      script: |
+        pod lib lint $(args)
+      workingDirectory: '$(Build.SourcesDirectory)'
+
+  - task: Bash@3
+    displayName: Discard temporary changes made to MSAL.podspec
+    inputs:
+      targetType: 'inline'
+      script: |
+        git checkout -f -- MSAL.podspec
+      workingDirectory: '$(Build.SourcesDirectory)'

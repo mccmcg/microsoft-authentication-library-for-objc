@@ -36,7 +36,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     let context = MSALNativeAuthRequestContext(correlationId: UUID(uuidString: DEFAULT_TEST_UID)!)
 
     func test_signInInititate_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForSignIn(type: .signInInitiate),
             context: context
@@ -63,14 +63,15 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_signInChallenge_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.otp]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.otp], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForSignIn(type: .signInChallenge),
             context: context
         )
 
         let request = MSIDHttpRequest()
-        let params = MSALNativeAuthSignInChallengeRequestParameters(context: context,
+        let params = MSALNativeAuthSignInChallengeRequestParameters(context: context, 
+                                                                    mfaAuthMethodId: "1",
                                                                     continuationToken: "Test Credential Token")
         let sut = MSALNativeAuthRequestConfigurator(config: config)
         try sut.configure(configuratorType: .signIn(.challenge(params)),
@@ -80,6 +81,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
         let expectedBodyParams = [
             "client_id": DEFAULT_TEST_CLIENT_ID,
             "continuation_token": "Test Credential Token",
+            "id": "1",
             "challenge_type": "otp"
         ]
 
@@ -88,9 +90,35 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
         checkHeaders(request: request)
         checkTelemetry(request.serverTelemetry, telemetry)
     }
+    
+    func test_signInIntrospect_getsConfiguredSuccessfully() throws {
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.otp], redirectUri: nil))
+        let telemetry = MSALNativeAuthServerTelemetry(
+            currentRequestTelemetry: telemetryProvider.telemetryForSignIn(type: .signInIntrospect),
+            context: context
+        )
+
+        let request = MSIDHttpRequest()
+        let params = MSALNativeAuthSignInIntrospectRequestParameters(context: context,
+                                                                    continuationToken: "Test Credential Token")
+        let sut = MSALNativeAuthRequestConfigurator(config: config)
+        try sut.configure(configuratorType: .signIn(.introspect(params)),
+                          request: request,
+                          telemetryProvider: telemetryProvider)
+
+        let expectedBodyParams = [
+            "client_id": DEFAULT_TEST_CLIENT_ID,
+            "continuation_token": "Test Credential Token"
+        ]
+
+        XCTAssertEqual(request.parameters, expectedBodyParams)
+        checkUrlRequest(request.urlRequest, endpoint: .signInIntrospect)
+        checkHeaders(request: request)
+        checkTelemetry(request.serverTelemetry, telemetry)
+    }
 
     func test_signInToken_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForToken(type: .signInWithPassword),
             context: context
@@ -105,7 +133,8 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
                                                           password: "password",
                                                           oobCode: "oob",
                                                           includeChallengeType: true,
-                                                          refreshToken: nil)
+                                                          refreshToken: nil,
+                                                          claimsRequestJson: nil)
 
         let sut = MSALNativeAuthRequestConfigurator(config: config)
         try sut.configure(configuratorType: .token(.signInWithPassword(params)),
@@ -131,7 +160,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_signUpStartRequest_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForSignUp(type: .signUpStart),
             context: context
@@ -163,7 +192,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_signUpChallengeRequest_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForSignUp(type: .signUpChallenge),
             context: context
@@ -191,7 +220,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_signUpContinueRequest_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: []))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForSignUp(type: .signUpContinue),
             context: context
@@ -227,7 +256,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
 
 
     func test_resetPasswordStart_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForResetPassword(type: .resetPasswordStart),
             context: context
@@ -255,7 +284,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_resetPasswordChallenge_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .oob, .redirect], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForResetPassword(type: .resetPasswordChallenge),
             context: context
@@ -283,7 +312,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_resetPasswordContinue_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: []))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForResetPassword(type: .resetPasswordContinue),
             context: context
@@ -314,7 +343,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_resetPasswordSubmit_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: []))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForResetPassword(type: .resetPasswordSubmit),
             context: context
@@ -343,7 +372,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_resetPasswordPollCompletion_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: []))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForResetPassword(type: .resetPasswordPollCompletion),
             context: context
@@ -370,7 +399,7 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
     }
 
     func test_refreshToken_getsConfiguredSuccessfully() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], redirectUri: nil))
         let telemetry = MSALNativeAuthServerTelemetry(
             currentRequestTelemetry: telemetryProvider.telemetryForToken(type: .refreshToken),
             context: context
@@ -385,7 +414,8 @@ final class MSALNativeAuthRequestConfiguratorTests: XCTestCase {
                                                           password: nil,
                                                           oobCode: nil,
                                                           includeChallengeType: false,
-                                                          refreshToken: "refreshToken")
+                                                          refreshToken: "refreshToken",
+                                                          claimsRequestJson: nil)
 
         let sut = MSALNativeAuthRequestConfigurator(config: config)
         try sut.configure(configuratorType: .token(.refreshToken(params)),

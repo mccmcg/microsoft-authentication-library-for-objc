@@ -46,7 +46,8 @@ class MSALNativeAuthTokenIntegrationTests: MSALNativeAuthIntegrationBaseTests {
                 password: nil,
                 oobCode: nil,
                 includeChallengeType: false,
-                refreshToken: nil
+                refreshToken: nil,
+                claimsRequestJson: nil
             ),
             context: context
         )
@@ -76,7 +77,8 @@ class MSALNativeAuthTokenIntegrationTests: MSALNativeAuthIntegrationBaseTests {
                                                               password: nil,
                                                               oobCode: nil,
                                                               includeChallengeType: false,
-                                                              refreshToken: nil)
+                                                              refreshToken: nil,
+                                                              claimsRequestJson: nil)
 
 
         let request = try! provider.refreshToken(parameters: parameters,
@@ -99,21 +101,21 @@ class MSALNativeAuthTokenIntegrationTests: MSALNativeAuthIntegrationBaseTests {
         await fulfillment(of: [expectation], timeout: defaultTimeout)
     }
 
-    func test_failRequest_invalidPurposeToken() async throws {
-        throw XCTSkip()
-        
-        let response = try await perform_testFail(
+    func test_failRequest_invalidContinuationToken() async throws {
+        try await perform_testFail(
             endpoint: .signInToken,
-            response: .invalidPurposeToken,
-            expectedError: createError(.invalidRequest)
+            response: .invalidContinuationToken,
+            expectedError: Error(error: .invalidRequest, errorDescription: nil, errorCodes: [55000], errorURI: nil, innerErrors: nil)
         )
-
-        guard let innerError = response.innerErrors?.first else {
-            return XCTFail("There should be an inner error")
-        }
-
-        XCTAssertEqual(innerError.error, "invalid_purpose_token")
-        XCTAssertNotNil(innerError.errorDescription)
+    }
+    
+    func test_failRequest_mfaRequired() async throws {
+        let errorResponse = try await perform_testFail(
+            endpoint: .signInToken,
+            response: .mfaRequired,
+            expectedError: Error(error: .invalidGrant, subError: .mfaRequired,  errorDescription: nil, errorCodes: nil, errorURI: nil, innerErrors: nil)
+        )
+        XCTAssertEqual(errorResponse.subError, .mfaRequired)
     }
 
     func test_failRequest_invalidPassword() async throws {
@@ -170,7 +172,7 @@ class MSALNativeAuthTokenIntegrationTests: MSALNativeAuthIntegrationBaseTests {
 
         let expectedError = createError(.slowDown)
 
-        XCTAssertEqual(result.error?.rawValue, expectedError.error?.rawValue)
+        XCTAssertEqual(result.error.rawValue, expectedError.error.rawValue)
     }
 
     private func createError(_ code: MSALNativeAuthTokenOauth2ErrorCode, subError: MSALNativeAuthSubErrorCode? = nil, errorCodes: [MSALNativeAuthESTSApiErrorCodes]? = nil) -> Error {

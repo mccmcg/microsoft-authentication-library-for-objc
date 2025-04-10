@@ -85,13 +85,20 @@ static MSIDTestConfigurationProvider *s_confProvider;
 - (void)assertAuthUIAppearsUsingEmbeddedWebView:(BOOL)useEmbedded
 {
     XCUIElement *webElement = self.testApp.buttons[@"URL"];
-
+    
     if (useEmbedded)
     {
         webElement = self.testApp.buttons[@"Cancel"];
     }
+    else
+    {
+        sleep(10);
+        XCUIElement *registerButton = self.testApp.buttons[@"Allow"];
+        XCUIElement *result = [self waitForEitherElements:registerButton and:webElement];
+        [result msidTap];
+    }
     
-    BOOL result = [webElement waitForExistenceWithTimeout:5.0];
+    BOOL result = [webElement waitForExistenceWithTimeout:15.0];
     
     XCTAssertTrue(result);
 }
@@ -214,9 +221,21 @@ static MSIDTestConfigurationProvider *s_confProvider;
         // We take the second one and tap it
         XCUIElement *secondButton = [elementQuery elementBoundByIndex:1];
         [secondButton msidTap];
-    } else
+    } 
+    else
     {
-        [self.testApp.buttons[buttonTitle] msidTap];
+        if (webViewType == MSIDWebviewTypeSafariViewController)
+        {
+            // We take the first one and force tap it, for some reason tap doesn't work
+            XCUIElement *firstButton = [elementQuery elementBoundByIndex:0];
+            
+            __auto_type coordinate = [firstButton coordinateWithNormalizedOffset:CGVectorMake(0, 0)];
+            [coordinate tap];
+        }
+        else
+        {
+            [self.testApp.buttons[buttonTitle] msidTap];
+        }
     }
 }
 

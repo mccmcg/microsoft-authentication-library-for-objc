@@ -62,14 +62,16 @@
     }
   ],
   "defaultOptions" : {
+    "codeCoverage" : false,
+    "testRepetitionMode" : "retryOnFailure",
     "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {
       "target" : {
         "containerPath" : "container:MSAL.xcodeproj",
-        "identifier" : "28D1D56B29BF62E900CE75F4",
-        "name" : "MSAL iOS Native Auth Integration Tests"
+        "identifier" : "DE1BD0CE2C3C275200B0888E",
+        "name" : "MSAL Mac Native Auth Integration Tests"
       }
     }
   ],

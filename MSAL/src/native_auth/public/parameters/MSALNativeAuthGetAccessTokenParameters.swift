@@ -16,22 +16,26 @@
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// THE SOFTWARE.  
 
-@_implementationOnly import MSAL_Private
+/// Encapsulates the parameters passed to the getAccessToken method of MSALNativeAuthUserAccountResult
+@objcMembers
+public class MSALNativeAuthGetAccessTokenParameters: NSObject {
 
-class MSALNativeAuthTokens {
-    let accessToken: MSIDAccessToken
-    let refreshToken: MSIDRefreshToken?
-    let rawIdToken: String?
+    /// Set to true to ignore any existing access token in the cache and force MSAL to get a new access token from the service.
+    public var forceRefresh: Bool = false
 
-    init(accessToken: MSIDAccessToken, refreshToken: MSIDRefreshToken?, rawIdToken: String?) {
-        self.accessToken = accessToken
-        self.refreshToken = refreshToken
-        self.rawIdToken = rawIdToken
-    }
+    /// Permissions you want included in the access token received.
+    /// Not all scopes are guaranteed to be included in the access token returned.
+    public var scopes: [String]?
+
+    /// The claims parameter that needs to be sent to the service.
+    public var claimsRequest: MSALClaimsRequest?
+
+    /// UUID to correlate this request with the server for debugging.
+    public var correlationId: UUID?
 }

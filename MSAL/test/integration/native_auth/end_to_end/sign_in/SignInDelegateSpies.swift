@@ -30,8 +30,10 @@ class SignInPasswordStartDelegateSpy: SignInStartDelegate {
     private let expectation: XCTestExpectation
     private(set) var onSignInPasswordErrorCalled = false
     private(set) var onSignInCompletedCalled = false
+    private(set) var onSignInAwaitingMFACalled = false
     private(set) var error: MSAL.SignInStartError?
     private(set) var result: MSAL.MSALNativeAuthUserAccountResult?
+    private(set) var newStateAwaitingMFA: MSAL.AwaitingMFAState?
 
     init(expectation: XCTestExpectation) {
         self.expectation = expectation
@@ -48,6 +50,13 @@ class SignInPasswordStartDelegateSpy: SignInStartDelegate {
         onSignInCompletedCalled = true
         self.result = result
 
+        expectation.fulfill()
+    }
+    
+    public func onSignInAwaitingMFA(newState: AwaitingMFAState) {
+        onSignInAwaitingMFACalled = true
+        
+        self.newStateAwaitingMFA = newState
         expectation.fulfill()
     }
 }
@@ -146,6 +155,36 @@ class SignInPasswordRequiredDelegateSpy: SignInPasswordRequiredDelegate {
     func onSignInCompleted(result: MSAL.MSALNativeAuthUserAccountResult) {
         onSignInCompletedCalled = true
         self.result = result
+
+        expectation.fulfill()
+    }
+}
+
+class SignInResendCodeDelegateSpy: SignInResendCodeDelegate {
+    private let expectation: XCTestExpectation
+    private(set) var onSignInResendCodeErrorCalled = false
+    private(set) var error: ResendCodeError?
+    private(set) var onSignInResendCodeCodeRequiredCalled = false
+    private(set) var signInCodeRequiredState: SignInCodeRequiredState?
+    private(set) var sentTo: String?
+    private(set) var channelTargetType: MSALNativeAuthChannelType?
+    private(set) var codeLength: Int?
+
+    init(expectation: XCTestExpectation) {
+        self.expectation = expectation
+    }
+
+    func onSignInResendCodeError(error: MSAL.ResendCodeError, newState: MSAL.SignInCodeRequiredState?) {
+        onSignInResendCodeErrorCalled = true
+        self.error = error
+    }
+
+    func onSignInResendCodeCodeRequired(newState: SignInCodeRequiredState, sentTo: String, channelTargetType: MSALNativeAuthChannelType, codeLength: Int) {
+        onSignInResendCodeCodeRequiredCalled = true
+        signInCodeRequiredState = newState
+        self.sentTo = sentTo
+        self.channelTargetType = channelTargetType
+        self.codeLength = codeLength
 
         expectation.fulfill()
     }

@@ -1,3 +1,58 @@
+## [1.9.0]
+* Add feature flags provider to be controlled from broker (#2540)
+* Added GitHub issue templates for better issue tracking and reporting (#2554)
+
+## [1.8.1]
+* Cherry pick DUNA "resume" action fix #2558
+
+## [1.8.0]
+* Support sendable result (#2518)
+* Support DUNA protocol for CBA flow (#2508)
+
+## [1.7.0]
+* Add support for claims request in native authentication signIn (#2496)
+* Move native auth public methods to parameter class (#2492)
+
+## [1.6.3]
+* Merge 1.6.1-hotfix
+
+## [1.6.2]:
+* Add native auth instructions to error description when reset password required is returned (#2582)
+* Save error received from ESTS, and return it to the client on silent broker calls (#2379)
+* Support web_page_uri (#2384)
+
+## [1.6.1-hotfix]
+* Add support of "lookup" mode in broker #2414
+
+## [1.6.1]:
+* Support extra query parameters on logout endpoint (#2339)
+* Add support functions to help broker improve cross cloud experience (#2361)
+
+## [1.6.0]:
+* Support extra query parameters on logout endpoint (#2339)
+
+## [1.5.1]:
+* Parse and add STS error codes in token error result (#2319)
+* VisionOS support added (#2139)
+
+## [1.5.0]
+* Increased macOS minimum version to 10.15 (#2220)
+* Added Native Auth feature for MacOS to interact with the Microsoft Entra ID services (#2220)
+
+## [1.4.2]
+* Fix invalid cert auth request handling (hotfix). (#2278)
+
+## [1.4.1]
+* Update Native Auth logging levels for improved clarity and consistency. (#2184)
+* Update common core submodule with changes related to upgrade registration. (#2180)
+* Add a new flag MSALThrottlingCacheHitKey for error returned from client's throttling. (#2257)
+* Update common core submodule with device register action with token protection hint. (#2244)
+* Native Auth logs are appropriately masked to ensure sensitive information is protected. (#2253)
+
+## [1.4.0]:
+* Add platform sequence param. #2192
+* Native auth can now store multiple access tokens related to different resources.
+
 ## [1.3.3]
 * Update common core submodule.
 * Automation improvements.

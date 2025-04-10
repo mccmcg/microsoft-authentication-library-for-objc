@@ -30,12 +30,13 @@ final class SignInCodeRequiredStateTests: XCTestCase {
     private var sut: SignInCodeRequiredState!
     private var controller: MSALNativeAuthSignInControllerMock!
     private var correlationId: UUID = UUID()
+    private let claimsRequestJson = "claims"
 
     override func setUp() {
         super.setUp()
 
         controller = .init()
-        sut = .init(scopes: [], controller: controller, continuationToken: "continuationToken", correlationId: correlationId)
+        sut = .init(scopes: [], controller: controller, claimsRequestJson: claimsRequestJson, continuationToken: "continuationToken", correlationId: correlationId)
     }
 
     // MARK: - Delegates
@@ -46,7 +47,7 @@ final class SignInCodeRequiredStateTests: XCTestCase {
         let exp = expectation(description: "sign-in states")
 
         let expectedError = ResendCodeError(message: "test error", correlationId: correlationId)
-        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, continuationToken: "continuationToken 2", correlationId: correlationId)
+        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, claimsRequestJson: claimsRequestJson, continuationToken: "continuationToken 2", correlationId: correlationId)
 
         let expectedResult: SignInResendCodeResult = .error(
             error: expectedError,
@@ -67,19 +68,19 @@ final class SignInCodeRequiredStateTests: XCTestCase {
     func test_resendCode_delegate_success_shouldReturnSignInResendCodeCodeRequired() {
         let exp = expectation(description: "sign-in states")
         let exp2 = expectation(description: "expectation Telemetry")
-        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, continuationToken: "continuationToken 2", correlationId: correlationId)
+        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, claimsRequestJson: claimsRequestJson, continuationToken: "continuationToken 2", correlationId: correlationId)
 
         let expectedResult: SignInResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResult = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in
             exp2.fulfill()
         })
 
-        let delegate = SignInResendCodeDelegateSpy(expectation: exp, expectedSentTo: "sentTo", expectedChannelTargetType: .email, expectedCodeLength: 1)
+        let delegate = SignInResendCodeDelegateSpy(expectation: exp, expectedSentTo: "sentTo", expectedChannelTargetType: MSALNativeAuthChannelType(value: "email"), expectedCodeLength: 1)
 
         sut.resendCode(delegate: delegate)
         wait(for: [exp, exp2])
@@ -89,12 +90,12 @@ final class SignInCodeRequiredStateTests: XCTestCase {
     func test_resendCode_delegate_success_butMethodNotImplemented_shouldReturnCorrectError() {
         let exp = expectation(description: "sign-in states")
         let exp2 = expectation(description: "expectation Telemetry")
-        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, continuationToken: "continuationToken 2", correlationId: UUID())
+        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, claimsRequestJson: claimsRequestJson, continuationToken: "continuationToken 2", correlationId: UUID())
 
         let expectedResult: SignInResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResult = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in
@@ -114,7 +115,7 @@ final class SignInCodeRequiredStateTests: XCTestCase {
     func test_submitCode_delegate_withError_shouldReturnSignInVerifyCodeError() {
         let exp = expectation(description: "sign-in states")
         let expectedError = VerifyCodeError(type: .invalidCode, correlationId: .init())
-        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, continuationToken: "continuationToken 2", correlationId: correlationId)
+        let expectedState = SignInCodeRequiredState(scopes: [], controller: controller, claimsRequestJson: claimsRequestJson, continuationToken: "continuationToken 2", correlationId: correlationId)
 
         let expectedResult: SignInVerifyCodeResult = .error(
             error: expectedError,

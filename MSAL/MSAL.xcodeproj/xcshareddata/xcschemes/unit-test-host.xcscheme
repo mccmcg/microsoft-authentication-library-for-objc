@@ -29,7 +29,7 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:NativeAuthEndToEndTestPlan.xctestplan"
+            reference = "container:test/testplan/NativeAuthEndToEndTestPlan.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
@@ -42,6 +42,17 @@
                BlueprintIdentifier = "28D1D56B29BF62E900CE75F4"
                BuildableName = "MSAL iOS Native Auth Integration Tests.xctest"
                BlueprintName = "MSAL iOS Native Auth Integration Tests"
+               ReferencedContainer = "container:MSAL.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "28CED2E72C21E0F9004320D1"
+               BuildableName = "MSAL iOS Native Auth E2E Tests.xctest"
+               BlueprintName = "MSAL iOS Native Auth E2E Tests"
                ReferencedContainer = "container:MSAL.xcodeproj">
             </BuildableReference>
          </TestableReference>

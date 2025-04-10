@@ -16,28 +16,30 @@
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// THE SOFTWARE.  
 
-@_implementationOnly import MSAL_Private
 
-class MSALNativeAuthSignInParameters {
-    let username: String
-    let password: String?
-    let context: MSALNativeAuthRequestContext
-    let scopes: [String]?
+import SwiftUI
 
-    init(
-        username: String,
-        password: String?,
-        context: MSALNativeAuthRequestContext,
-        scopes: [String]?) {
-        self.username = username
-        self.password = password
-        self.context = context
-        self.scopes = scopes
+struct MSALTestAppView: UIViewControllerRepresentable {
+    typealias UIViewControllerType = MSALTestAppVisionViewController
+    
+    func makeUIViewController(context: Context) -> MSALTestAppVisionViewController {
+        let vc = MSALTestAppVisionViewController()
+        
+        return vc
     }
+    
+    func updateUIViewController(_ uiViewController: MSALTestAppVisionViewController, context: Context) {
+        // nothing for now
+    }
+
+}
+
+#Preview {
+    MSALTestAppView()
 }

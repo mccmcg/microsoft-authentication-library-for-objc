@@ -25,10 +25,12 @@
 @testable import MSAL
 import XCTest
 
-class MSALNativeAuthSignInControllerMock: MSALNativeAuthSignInControlling {
+class MSALNativeAuthSignInControllerMock: MSALNativeAuthSignInControlling, MSALNativeAuthMFAControlling {
 
     private(set) var username: String?
     private(set) var continuationToken: String?
+    private(set) var telemetryId: MSALNativeAuthTelemetryApiId?
+    private(set) var claimsRequestJson: String?
     var expectation: XCTestExpectation?
 
     var signInStartResult: MSALNativeAuthSignInControlling.SignInControllerResponse!
@@ -37,27 +39,52 @@ class MSALNativeAuthSignInControllerMock: MSALNativeAuthSignInControlling {
     var submitPasswordResult: SignInSubmitPasswordControllerResponse!
     var resendCodeResult: SignInResendCodeControllerResponse!
 
-    func signIn(params: MSAL.MSALNativeAuthSignInParameters) async -> MSALNativeAuthSignInControlling.SignInControllerResponse {
+    var requestChallengeResponse: MFARequestChallengeControllerResponse!
+    var getAuthMethodsResponse: MFAGetAuthMethodsControllerResponse!
+    var submitChallengeResponse: MFASubmitChallengeControllerResponse!
+
+    func signIn(params: MSAL.MSALNativeAuthInternalSignInParameters) async -> MSALNativeAuthSignInControlling.SignInControllerResponse {
         return signInStartResult
     }
 
-    func signIn(username: String, continuationToken: String?, scopes: [String]?, context: MSAL.MSALNativeAuthRequestContext) async -> SignInAfterPreviousFlowControllerResponse {
+    func signIn(
+        username: String,
+        continuationToken: String?,
+        scopes: [String]?,
+        claimsRequestJson: String?,
+        telemetryId: MSAL.MSALNativeAuthTelemetryApiId,
+        context: MSAL.MSALNativeAuthRequestContext
+    ) async -> SignInAfterPreviousFlowControllerResponse {
         self.username = username
         self.continuationToken = continuationToken
+        self.telemetryId = telemetryId
+        self.claimsRequestJson = claimsRequestJson
         expectation?.fulfill()
 
         return continuationTokenResult
     }
 
-    func submitCode(_ code: String, continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String]) async -> SignInSubmitCodeControllerResponse {
-        submitCodeResult
+    func submitCode(_ code: String, continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> SignInSubmitCodeControllerResponse {
+        return submitCodeResult
     }
 
-    func submitPassword(_ password: String, username: String, continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String]) async -> SignInSubmitPasswordControllerResponse {
+    func submitPassword(_ password: String, username: String, continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> SignInSubmitPasswordControllerResponse {
         return submitPasswordResult
     }
 
-    func resendCode(continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String]) async -> SignInResendCodeControllerResponse {
+    func resendCode(continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> SignInResendCodeControllerResponse {
         return resendCodeResult
+    }
+    
+    func requestChallenge(continuationToken: String, authMethod: MSAL.MSALAuthMethod?, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> MFARequestChallengeControllerResponse {
+        return requestChallengeResponse
+    }
+    
+    func getAuthMethods(continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> MFAGetAuthMethodsControllerResponse {
+        return getAuthMethodsResponse
+    }
+    
+    func submitChallenge(challenge: String, continuationToken: String, context: MSAL.MSALNativeAuthRequestContext, scopes: [String], claimsRequestJson: String?) async -> MFASubmitChallengeControllerResponse {
+        return submitChallengeResponse
     }
 }

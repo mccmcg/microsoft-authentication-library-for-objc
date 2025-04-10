@@ -201,7 +201,7 @@ final class MSALNativeAuthResetPasswordControllerTests: MSALNativeAuthTestCase {
         validatorMock.mockValidateResetPasswordStartFunc(.success(continuationToken: "continuationToken"))
         requestProviderMock.mockChallengeRequestFunc(MSALNativeAuthHTTPRequestMock.prepareMockRequest())
         requestProviderMock.expectedChallengeRequestParameters = expectedChallengeParams()
-        validatorMock.mockValidateResetPasswordChallengeFunc(.success("sentTo", .email, 4, "continuationToken"))
+        validatorMock.mockValidateResetPasswordChallengeFunc(.success("sentTo", MSALNativeAuthChannelType(value: "email"), 4, "continuationToken"))
 
         let exp = expectation(description: "ResetPasswordController expectation")
         let helper = prepareResetPasswordStartValidatorHelper(exp)
@@ -214,7 +214,7 @@ final class MSALNativeAuthResetPasswordControllerTests: MSALNativeAuthTestCase {
         XCTAssertTrue(helper.onResetPasswordCodeRequiredCalled)
         XCTAssertEqual(helper.newState?.continuationToken, "continuationToken")
         XCTAssertEqual(helper.sentTo, "sentTo")
-        XCTAssertEqual(helper.channelTargetType, .email)
+        XCTAssertEqual(helper.channelTargetType?.isEmailType, true)
         XCTAssertEqual(helper.codeLength, 4)
         XCTAssertNil(helper.error)
 
@@ -331,7 +331,7 @@ final class MSALNativeAuthResetPasswordControllerTests: MSALNativeAuthTestCase {
         requestProviderMock.mockChallengeRequestFunc(MSALNativeAuthHTTPRequestMock.prepareMockRequest())
         requestProviderMock.expectedChallengeRequestParameters = expectedChallengeParams()
 
-        validatorMock.mockValidateResetPasswordChallengeFunc(.success("sentTo", .email, 4, "continuationToken response"))
+        validatorMock.mockValidateResetPasswordChallengeFunc(.success("sentTo", MSALNativeAuthChannelType(value: "email"), 4, "continuationToken response"))
 
         let exp = expectation(description: "ResetPasswordController expectation")
         let helper = prepareResetPasswordResendCodeValidatorHelper(exp)
@@ -344,7 +344,7 @@ final class MSALNativeAuthResetPasswordControllerTests: MSALNativeAuthTestCase {
         XCTAssertTrue(helper.onResetPasswordResendCodeRequiredCalled)
         XCTAssertEqual(helper.newState?.continuationToken, "continuationToken response")
         XCTAssertEqual(helper.sentTo, "sentTo")
-        XCTAssertEqual(helper.channelTargetType, .email)
+        XCTAssertEqual(helper.channelTargetType?.isEmailType, true)
         XCTAssertEqual(helper.codeLength, 4)
         XCTAssertNil(helper.error)
 
@@ -889,6 +889,59 @@ final class MSALNativeAuthResetPasswordControllerTests: MSALNativeAuthTestCase {
 
         XCTAssertEqual(signInControllerMock.username, username)
         XCTAssertEqual(signInControllerMock.continuationToken, continuationToken)
+        XCTAssertEqual(signInControllerMock.telemetryId, .telemetryApiIdSignInAfterPasswordReset)
+    }
+
+    // MARK: - Sign-in with continuationToken using parameters
+
+    func test_whenResetPasswordSucceeds_and_userCallsSignInUsingParametersWithContinuationToken_ResetPasswordControllerPassesCorrectParams() async {
+        let username = "username"
+        let continuationToken = "continuationToken"
+
+        class SignInAfterResetPasswordDelegateStub: SignInAfterResetPasswordDelegate {
+            func onSignInAfterResetPasswordError(error: MSAL.SignInAfterResetPasswordError) {}
+        }
+
+        let signInControllerMock = MSALNativeAuthSignInControllerMock()
+
+        sut = .init(
+            config: MSALNativeAuthConfigStubs.configuration,
+            requestProvider: requestProviderMock,
+            responseValidator: validatorMock,
+            signInController: signInControllerMock
+        )
+
+        requestProviderMock.mockSubmitRequestFunc(MSALNativeAuthHTTPRequestMock.prepareMockRequest())
+        requestProviderMock.expectedSubmitRequestParameters = expectedSubmitParams()
+        validatorMock.mockValidateResetPasswordSubmitFunc(.success(continuationToken: "continuationToken", pollInterval: 0))
+        requestProviderMock.mockPollCompletionRequestFunc(MSALNativeAuthHTTPRequestMock.prepareMockRequest())
+        requestProviderMock.expectedPollCompletionParameters = expectedPollCompletionParameters()
+        validatorMock.mockValidateResetPasswordPollCompletionFunc(.success(status: .succeeded, continuationToken: continuationToken))
+
+        let exp = expectation(description: "ResetPasswordController expectation")
+        let helper = prepareResetPasswordSubmitPasswordValidatorHelper(exp)
+
+        let result = await sut.submitPassword(password: "password", username: username, continuationToken: "continuationToken", context: contextMock)
+        result.telemetryUpdate?(.success(()))
+
+        helper.onResetPasswordCompleted(result)
+
+        await fulfillment(of: [exp], timeout: 1)
+        XCTAssertTrue(helper.onResetPasswordCompletedCalled)
+
+        checkTelemetryEventResult(id: .telemetryApiIdResetPasswordSubmit, isSuccessful: true)
+
+        let exp2 = expectation(description: "SignInAfterResetPassword expectation")
+        signInControllerMock.expectation = exp2
+        signInControllerMock.continuationTokenResult = .init(.failure(SignInAfterResetPasswordError(correlationId: correlationId)), correlationId: correlationId)
+
+        let parameters = MSALNativeAuthSignInAfterResetPasswordParameters()
+        helper.signInAfterResetPasswordState?.signIn(parameters: parameters, delegate: SignInAfterResetPasswordDelegateStub())
+        await fulfillment(of: [exp2], timeout: 1)
+
+        XCTAssertEqual(signInControllerMock.username, username)
+        XCTAssertEqual(signInControllerMock.continuationToken, continuationToken)
+        XCTAssertEqual(signInControllerMock.telemetryId, .telemetryApiIdSignInAfterPasswordReset)
     }
 
     // MARK: - Common Methods
