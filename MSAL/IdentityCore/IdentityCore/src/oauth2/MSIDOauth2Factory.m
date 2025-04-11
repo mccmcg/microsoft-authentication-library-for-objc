@@ -59,14 +59,14 @@
 
 - (MSIDTokenResponse *)tokenResponseFromJSON:(NSDictionary *)json
                                      context:(__unused id<MSIDRequestContext>)context
-                                       error:(NSError **)error
+                                       error:(NSError *__autoreleasing*)error
 {
     return [[MSIDTokenResponse alloc] initWithJSONDictionary:json error:error];
 }
 
 - (BOOL)verifyResponse:(MSIDTokenResponse *)response
                context:(id<MSIDRequestContext>)context
-                 error:(NSError **)error
+                 error:(NSError *__autoreleasing*)error
 {
     if (!response)
     {
@@ -85,6 +85,7 @@
         {
             NSMutableDictionary *userInfo = [NSMutableDictionary new];
             userInfo[MSIDBrokerVersionKey] = response.clientAppVersion;
+            if (response.stsErrorCodes) userInfo[MSIDSTSErrorCodesKey] = response.stsErrorCodes;
             
             *error = MSIDCreateError(MSIDOAuthErrorDomain,
                                      response.oauthErrorCode,
@@ -374,7 +375,7 @@
        fromResponse:(MSIDTokenResponse *)response
       configuration:(MSIDConfiguration *)configuration
 {
-    NSString *homeAccountId = response.idTokenObj.userId;
+    NSString *homeAccountId = response.idTokenObj.userId ?: [response accountIdentifier];
 
     if (!homeAccountId)
     {
@@ -487,7 +488,7 @@
 
 - (MSIDAuthority *)resultAuthorityWithConfiguration:(MSIDConfiguration *)configuration
                                       tokenResponse:(MSIDTokenResponse *)response
-                                              error:(__unused NSError **)error
+                                              error:(__unused NSError *__autoreleasing*)error
 {
     if (response.idTokenObj.issuerAuthority)
     {

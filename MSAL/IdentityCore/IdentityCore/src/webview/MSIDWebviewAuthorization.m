@@ -95,15 +95,16 @@ static MSIDWebviewSession *s_currentSession = nil;
         NSError *responseError = nil;
 
         if ([callbackURL.host containsString:@"forgotten_password"]) {
-          NSError *error = MSIDCreateError(MSIDForgottenPassword, MSIDForgottenPasswordResponse, @"Interactive session failed to create.", nil, nil, nil, context.correlationId, @{ @"hint" : callbackURL.absoluteString }, YES);
-          completionHandler(nil, error);
-          return;
+            NSError *error = MSIDCreateError(MSIDForgottenPassword, MSIDForgottenPasswordResponse, @"Interactive session failed to create.", nil, nil, nil, context.correlationId, @{ @"hint" : callbackURL.absoluteString }, YES);
+            completionHandler(nil, error);
+            return;
         }
-        
+
         MSIDWebviewResponse *response = [s_currentSession.webViewConfiguration responseWithResultURL:callbackURL
                                                                                              factory:s_currentSession.factory
                                                                                              context:context
                                                                                                error:&responseError];
+        
         
         [MSIDWebviewAuthorization clearCurrentWebAuthSessionAndFactory];
         completionHandler(response, responseError);

@@ -27,6 +27,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MSIDConstants.h"
+#import "MSIDCustomHeaderProviding.h"
 
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
@@ -45,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Embedded webview
 @property (nonatomic, readwrite) NSDictionary<NSString *, NSString *> *customHeaders;
+@property (nonatomic) id<MSIDCustomHeaderProviding> customHeaderProvider; // provide extra headers for subsequent requests rather than the intial request
 
 @property (nonatomic, weak) MSIDViewController *parentController;
 @property (nonatomic) BOOL prefersEphemeralWebBrowserSession;
@@ -62,6 +64,10 @@ NS_ASSUME_NONNULL_BEGIN
 // By default, this is set to NO.
 @property (nonatomic, readonly) BOOL ignoreInvalidState;
 
+#if MSAL_JS_AUTOMATION
+@property (nonatomic) NSString *clientAutomationScript;
+#endif
+
 - (instancetype)initWithStartURL:(NSURL *)startURL
                   endRedirectUri:(NSString *)endRedirectUri
                            state:(NSString *)state
@@ -76,7 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable MSIDWebviewResponse *)responseWithResultURL:(NSURL *)url
                                                 factory:(MSIDWebviewFactory *)factory
                                                 context:(nullable id<MSIDRequestContext>)context
-                                                  error:(NSError * _Nullable * _Nullable)error;
+                                                  error:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
 @end
 

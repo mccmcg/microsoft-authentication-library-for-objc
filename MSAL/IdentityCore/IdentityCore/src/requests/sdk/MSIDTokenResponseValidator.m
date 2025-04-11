@@ -43,7 +43,7 @@
                              configuration:(MSIDConfiguration *)configuration
                             requestAccount:(__unused MSIDAccountIdentifier *)accountIdentifier
                              correlationID:(NSUUID *)correlationID
-                                     error:(NSError **)error
+                                     error:(NSError *__autoreleasing*)error
 {
     if (!tokenResponse)
     {
@@ -79,7 +79,7 @@
                                      configuration:(MSIDConfiguration *)configuration
                                     requestAccount:(__unused MSIDAccountIdentifier *)accountIdentifier
                                      correlationID:(NSUUID *)correlationID
-                                             error:(NSError **)error
+                                             error:(NSError *__autoreleasing*)error
 
 {
     MSIDAccessToken *accessToken = [factory accessTokenFromResponse:tokenResponse configuration:configuration];
@@ -124,8 +124,9 @@
 - (BOOL)validateTokenResult:(__unused MSIDTokenResult *)tokenResult
               configuration:(__unused MSIDConfiguration *)configuration
                   oidcScope:(__unused NSString *)oidcScope
+             validateScopes:(__unused BOOL)validateScopes
               correlationID:(__unused NSUUID *)correlationID
-                      error:(__unused NSError **)error
+                      error:(__unused NSError *__autoreleasing*)error
 {
     // Post saving validation
     return YES;
@@ -149,7 +150,7 @@
                                      correlationID:(NSUUID *)correlationID
                                   saveSSOStateOnly:(BOOL)saveSSOStateOnly
                                         authScheme:(MSIDAuthenticationScheme *)authScheme
-                                             error:(NSError **)error
+                                             error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CORR(MSIDLogLevelInfo, correlationID, @"Validating broker response.");
     
@@ -224,6 +225,7 @@
     BOOL resultValid = [self validateTokenResult:tokenResult
                                    configuration:configuration
                                        oidcScope:oidcScope
+                                  validateScopes:YES
                                    correlationID:correlationID
                                            error:error];
 
@@ -245,7 +247,7 @@
                              accountMetadataCache:(MSIDAccountMetadataCacheAccessor *)accountMetadataCache
                                 requestParameters:(MSIDRequestParameters *)parameters
                                  saveSSOStateOnly:(BOOL)saveSSOStateOnly
-                                            error:(NSError **)error
+                                            error:(NSError *__autoreleasing*)error
 {
     MSIDTokenResult *tokenResult = [self validateTokenResponse:tokenResponse
                                                   oauthFactory:factory
@@ -289,6 +291,7 @@
     BOOL resultValid = [self validateTokenResult:tokenResult
                                    configuration:parameters.msidConfiguration
                                        oidcScope:parameters.oidcScope
+                                  validateScopes:!parameters.ignoreScopeValidation
                                    correlationID:parameters.correlationId
                                            error:error];
 
@@ -308,7 +311,7 @@
                       tokenCache:(id<MSIDCacheAccessor>)tokenCache
                 saveSSOStateOnly:(BOOL)saveSSOStateOnly
                          context:(id<MSIDRequestContext>)context
-                           error:(NSError **)error
+                           error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX(MSIDLogLevelInfo, context, @"Saving token response, only save SSO state %d", saveSSOStateOnly);
     

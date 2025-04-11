@@ -63,6 +63,9 @@
 // Error code based on oauth error response
 @property (nonatomic, readonly) MSIDErrorCode oauthErrorCode;
 
+// A list of STS-specific error codes that server sends
+@property (nonatomic, nullable) NSArray<NSNumber *> *stsErrorCodes;
+
 // NSDate derived from expiresIn property and time received
 @property (nonatomic, readonly, nullable) NSDate *expiryDate;
 
@@ -87,6 +90,8 @@
 @property (nonatomic, nullable) NSString *ccsRequestSequence;
 
 @property (nonatomic, readonly, nullable) NSString *accountIdentifier;
+
+@property (nonatomic, readonly, nullable) NSString *accountUpn;
 
 - (nullable instancetype)initWithJSONDictionary:(nonnull NSDictionary *)json
                                    refreshToken:(nullable MSIDBaseToken<MSIDRefreshableToken> *)token

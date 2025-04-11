@@ -192,11 +192,20 @@
 
 - (NSArray<MSIDPrimaryRefreshToken *> *)getPrimaryRefreshTokensForConfiguration:(MSIDConfiguration *)configuration
                                                                         context:(id<MSIDRequestContext>)context
-                                                                          error:(NSError **)error
+                                                                          error:(NSError *__autoreleasing*)error
+{
+    return [self getPrimaryRefreshTokensForConfiguration:configuration account:nil context:context error:error];
+}
+
+- (NSArray<MSIDPrimaryRefreshToken *> *)getPrimaryRefreshTokensForConfiguration:(MSIDConfiguration *)configuration
+                                                                        account:(MSIDAccountIdentifier *)accountIdentifier
+                                                                        context:(id<MSIDRequestContext>)context
+                                                                          error:(NSError *__autoreleasing*)error
 {
     MSIDDefaultCredentialCacheQuery *query = [MSIDDefaultCredentialCacheQuery new];
     query.environmentAliases = [configuration.authority defaultCacheEnvironmentAliases];
     query.credentialType = MSIDPrimaryRefreshTokenType;
+    query.homeAccountId = accountIdentifier.homeAccountId;
 
     NSArray<MSIDPrimaryRefreshToken *> *refreshTokens = (NSArray<MSIDPrimaryRefreshToken *> *)[self getTokensWithEnvironment:configuration.authority.environment cacheQuery:query context:context error:error];
     return refreshTokens;
@@ -262,7 +271,7 @@
 #pragma mark - Clear cache
 
 - (BOOL)clearWithContext:(id<MSIDRequestContext>)context
-                   error:(NSError **)error
+                   error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX(MSIDLogLevelWarning, context, @"(Default accessor) Clearing everything in cache. This method should only be called in tests!");
     return [_accountCredentialCache clearWithContext:context error:error];
@@ -271,7 +280,7 @@
 #pragma mark - Read all tokens
 
 - (NSArray<MSIDBaseToken *> *)allTokensWithContext:(id<MSIDRequestContext>)context
-                                             error:(NSError **)error
+                                             error:(NSError *__autoreleasing*)error
 {
     CONDITIONAL_START_CACHE_EVENT(event, MSID_TELEMETRY_EVENT_TOKEN_CACHE_LOOKUP, context);
 
@@ -287,7 +296,7 @@
 - (MSIDAccessToken *)getAccessTokenForAccount:(MSIDAccountIdentifier *)accountIdentifier
                                 configuration:(MSIDConfiguration *)configuration
                                       context:(id<MSIDRequestContext>)context
-                                        error:(NSError **)error
+                                        error:(NSError *__autoreleasing*)error
 {
 
     MSIDDefaultCredentialCacheQuery *query = [MSIDDefaultCredentialCacheQuery new];
@@ -324,7 +333,7 @@
                         configuration:(MSIDConfiguration *)configuration
                           idTokenType:(MSIDCredentialType)idTokenType
                               context:(id<MSIDRequestContext>)context
-                                error:(NSError **)error
+                                error:(NSError *__autoreleasing*)error
 {
     if (idTokenType!=MSIDIDTokenType && idTokenType!=MSIDLegacyIDTokenType)
     {
@@ -365,7 +374,7 @@
                                 accountIdentifier:(MSIDAccountIdentifier *)accountIdentifier
                                          clientId:(NSString *)clientId
                                           context:(id<MSIDRequestContext>)context
-                                            error:(NSError **)error
+                                            error:(NSError *__autoreleasing*)error
 {
     MSIDDefaultCredentialCacheQuery *query = [MSIDDefaultCredentialCacheQuery new];
     query.homeAccountId = accountIdentifier.homeAccountId;
@@ -379,7 +388,7 @@
 
 - (BOOL)removeAccessToken:(MSIDAccessToken *)token
                   context:(id<MSIDRequestContext>)context
-                    error:(NSError **)error
+                    error:(NSError *__autoreleasing*)error
 {
     return [self removeToken:token
                      context:context
@@ -393,7 +402,7 @@
                                          familyId:(NSString *)familyId
                                 accountIdentifier:(MSIDAccountIdentifier *)accountIdentifier
                                           context:(id<MSIDRequestContext>)context
-                                            error:(NSError **)error
+                                            error:(NSError *__autoreleasing*)error
 {
     return [self accountsWithAuthority:authority
                               clientId:clientId
@@ -411,7 +420,7 @@
                              accountMetadataCache:(MSIDAccountMetadataCacheAccessor *)accountMetadataCache
                              signedInAccountsOnly:(BOOL)signedInAccountsOnly
                                           context:(id<MSIDRequestContext>)context
-                                            error:(NSError **)error
+                                            error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX(MSIDLogLevelInfo, context, @"(Default accessor) Get accounts.");
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelVerbose, context, @"(Default accessor) Get accounts with environment %@, clientId %@, familyId %@, account %@, username %@", authority.environment, clientId, familyId, accountIdentifier.maskedHomeAccountId, accountIdentifier.maskedDisplayableId);
@@ -527,9 +536,9 @@
                                authority:(MSIDAuthority *)authority
                                realmHint:(NSString *)realmHint
                      accountHomeTenantId:(NSString *)accountHomeTenantId
-                     accountSelectionLog:(NSString **)accountSelectionLog
+                     accountSelectionLog:(NSString *__autoreleasing*)accountSelectionLog
                                  context:(id<MSIDRequestContext>)context
-                                   error:(NSError **)error
+                                   error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelVerbose, context, @"(Default accessor) Looking for account with authority %@, legacy user ID %@, home account ID %@", authority.url, accountIdentifier.maskedDisplayableId, accountIdentifier.maskedHomeAccountId);
 
@@ -606,7 +615,7 @@
                     clientId:(NSString *)clientId
                     familyId:(NSString *)familyId
                      context:(id<MSIDRequestContext>)context
-                       error:(NSError **)error
+                       error:(NSError *__autoreleasing*)error
 {
     return [self clearCacheForAccount:accountIdentifier
                             authority:authority
@@ -623,7 +632,7 @@
                     familyId:(NSString *)familyId
                clearAccounts:(BOOL)clearAccounts
                      context:(id<MSIDRequestContext>)context
-                       error:(NSError **)error
+                       error:(NSError *__autoreleasing*)error
 {
     if (!accountIdentifier)
     {
@@ -710,7 +719,7 @@
 }
 
 - (BOOL)clearCacheForAllAccountsWithContext:(id<MSIDRequestContext>)context
-                                      error:(NSError **)error
+                                      error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, context, @"(Default accessor) Clearing cache for all accounts");
 
@@ -748,7 +757,7 @@
 
 - (BOOL)validateAndRemoveRefreshToken:(MSIDRefreshToken *)token
                               context:(id<MSIDRequestContext>)context
-                                error:(NSError **)error
+                                error:(NSError *__autoreleasing*)error
 {
     return [self validateAndRemoveRefreshableToken:token
                                     credentialType:MSIDRefreshTokenType
@@ -758,7 +767,7 @@
 
 - (BOOL)validateAndRemovePrimaryRefreshToken:(MSIDRefreshToken *)token
                                      context:(id<MSIDRequestContext>)context
-                                       error:(NSError **)error
+                                       error:(NSError *__autoreleasing*)error
 {
     return [self validateAndRemoveRefreshableToken:token
                                     credentialType:MSIDPrimaryRefreshTokenType
@@ -769,7 +778,7 @@
 - (BOOL)validateAndRemoveRefreshableToken:(MSIDRefreshToken *)token
                            credentialType:(MSIDCredentialType)credentialType
                                   context:(id<MSIDRequestContext>)context
-                                    error:(NSError **)error
+                                    error:(NSError *__autoreleasing*)error
 {
     if (credentialType != MSIDRefreshTokenType && credentialType != MSIDPrimaryRefreshTokenType) return NO;
 
@@ -818,7 +827,7 @@
 
 - (BOOL)checkAccountIdentifier:(NSString *)accountIdentifier
                        context:(id<MSIDRequestContext>)context
-                         error:(NSError **)error
+                         error:(NSError *__autoreleasing*)error
 {
     if (!accountIdentifier)
     {
@@ -840,7 +849,7 @@
                                 response:(MSIDTokenResponse *)response
                                  factory:(MSIDOauth2Factory *)factory
                                  context:(id<MSIDRequestContext>)context
-                                   error:(NSError **)error
+                                   error:(NSError *__autoreleasing*)error
 {
     MSIDAccessToken *accessToken = [factory accessTokenFromResponse:response configuration:configuration];
     if (!accessToken)
@@ -882,7 +891,7 @@
                             response:(MSIDTokenResponse *)response
                              factory:(MSIDOauth2Factory *)factory
                              context:(id<MSIDRequestContext>)context
-                               error:(NSError **)error
+                               error:(NSError *__autoreleasing*)error
 {
     MSIDIdToken *idToken = [factory idTokenFromResponse:response configuration:configuration];
 
@@ -900,7 +909,7 @@
                                  response:(MSIDTokenResponse *)response
                                   factory:(MSIDOauth2Factory *)factory
                                   context:(id<MSIDRequestContext>)context
-                                    error:(NSError **)error
+                                    error:(NSError *__autoreleasing*)error
 {
     MSIDRefreshToken *refreshToken = [factory refreshTokenFromResponse:response configuration:configuration];
 
@@ -933,7 +942,7 @@
                             response:(MSIDTokenResponse *)response
                              factory:(MSIDOauth2Factory *)factory
                              context:(id<MSIDRequestContext>)context
-                               error:(NSError **)error
+                               error:(NSError *__autoreleasing*)error
 {
     MSIDAccount *account = [factory accountFromResponse:response configuration:configuration];
 
@@ -950,7 +959,7 @@
 
 - (BOOL)removeToken:(MSIDBaseToken *)token
             context:(id<MSIDRequestContext>)context
-              error:(NSError **)error
+              error:(NSError *__autoreleasing*)error
 {
     if (!token)
     {
@@ -975,7 +984,7 @@
 - (NSString *)homeAccountIdForLegacyId:(NSString *)legacyAccountId
                              authority:(MSIDAuthority *)authority
                                context:(id<MSIDRequestContext>)context
-                                 error:(NSError **)error
+                                 error:(NSError *__autoreleasing*)error
 {
     CONDITIONAL_START_CACHE_EVENT(event, MSID_TELEMETRY_EVENT_TOKEN_CACHE_LOOKUP, context);
 
@@ -1002,7 +1011,7 @@
 - (MSIDBaseToken *)getTokenWithEnvironment:(NSString *)environment
                                 cacheQuery:(MSIDDefaultCredentialCacheQuery *)cacheQuery
                                    context:(id<MSIDRequestContext>)context
-                                     error:(NSError **)error
+                                     error:(NSError *__autoreleasing*)error
 {
     CONDITIONAL_START_CACHE_EVENT(event, MSID_TELEMETRY_EVENT_TOKEN_CACHE_LOOKUP, context);
 
@@ -1042,7 +1051,7 @@
 - (NSArray<MSIDBaseToken *> *)getTokensWithEnvironment:(NSString *)requestedEnvironment
                                             cacheQuery:(MSIDDefaultCredentialCacheQuery *)cacheQuery
                                                context:(id<MSIDRequestContext>)context
-                                                 error:(NSError **)error
+                                                 error:(NSError *__autoreleasing*)error
 {
     CONDITIONAL_START_CACHE_EVENT(event, MSID_TELEMETRY_EVENT_TOKEN_CACHE_LOOKUP, context);
 
@@ -1086,7 +1095,7 @@
                                              familyId:(NSString *)familyId
                                        credentialType:(MSIDCredentialType)credentialType
                                               context:(id<MSIDRequestContext>)context
-                                                error:(NSError **)error
+                                                error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelVerbose, context, @"(Default accessor) Looking for token with authority %@, clientId %@, legacy userId %@", authority, clientId, accountIdentifier.maskedDisplayableId);
 
@@ -1118,7 +1127,7 @@
 
 - (BOOL)saveToken:(MSIDBaseToken *)token
           context:(id<MSIDRequestContext>)context
-            error:(NSError **)error
+            error:(NSError *__autoreleasing*)error
 {
     if (![self checkAccountIdentifier:token.accountIdentifier.homeAccountId context:context error:error])
     {
@@ -1135,7 +1144,7 @@
 
 - (BOOL)saveAccount:(MSIDAccount *)account
             context:(id<MSIDRequestContext>)context
-              error:(NSError **)error
+              error:(NSError *__autoreleasing*)error
 {
     if (![self checkAccountIdentifier:account.accountIdentifier.homeAccountId context:context error:error])
     {
@@ -1172,7 +1181,7 @@
                                                  familyId:(NSString *)familyId
                                    accountCredentialCache:(MSIDAccountCredentialCache *)accountCredentialCache
                                                   context:(id<MSIDRequestContext>)context
-                                                    error:(NSError **)error
+                                                    error:(NSError *__autoreleasing*)error
 {
     // Retrieve refresh tokens in cache, and return account ids for those refresh tokens
     MSIDDefaultCredentialCacheQuery *refreshTokenQuery = [MSIDDefaultCredentialCacheQuery new];
@@ -1200,7 +1209,7 @@
                                                               clientId:(NSString *)clientId
                                                   accountMetadataCache:(MSIDAccountMetadataCacheAccessor *)accountMetadataCache
                                                   signedInAccountsOnly:(BOOL)signedInAccountsOnly
-                                                   noReturnAccountUPNs:(NSMutableSet<NSString *> **)noReturnAccountUPNs
+                                                   noReturnAccountUPNs:(NSMutableSet<NSString *> *__autoreleasing*)noReturnAccountUPNs
 {
     NSMutableSet<MSIDAccount *> *returnAccountsSet = [NSMutableSet new];
     NSMutableSet<NSString *> *noReturnAccountsSet = [NSMutableSet new];
@@ -1268,7 +1277,10 @@
         }
         else
         {
-            [noReturnAccountsSet addObject:accountCacheItem.username];
+            if (accountCacheItem.username)
+            {
+                [noReturnAccountsSet addObject:accountCacheItem.username];
+            }
         }
     }
 
@@ -1313,7 +1325,7 @@
                                 response:(MSIDTokenResponse *)response
                                  factory:(MSIDOauth2Factory *)factory
                                  context:(id<MSIDRequestContext>)context
-                                   error:(NSError **)error
+                                   error:(NSError *__autoreleasing*)error
 {
     MSIDAppMetadataCacheItem *metadata = [factory appMetadataFromResponse:response configuration:configuration];
     if (!metadata)
@@ -1347,7 +1359,7 @@
                              clientId:(NSString *)clientId
                             authority:(MSIDAuthority *)authority
                               context:(id<MSIDRequestContext>)context
-                                error:(NSError **)error
+                                error:(NSError *__autoreleasing*)error
 {
     MSIDAppMetadataCacheQuery *metadataQuery = [[MSIDAppMetadataCacheQuery alloc] init];
     metadataQuery.clientId = clientId;

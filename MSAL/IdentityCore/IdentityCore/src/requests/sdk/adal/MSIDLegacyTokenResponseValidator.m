@@ -37,8 +37,9 @@
 - (BOOL)validateTokenResult:(MSIDTokenResult *)tokenResult
               configuration:(__unused MSIDConfiguration *)configuration
                   oidcScope:(__unused NSString *)oidcScope
+             validateScopes:(__unused BOOL)validateScopes
               correlationID:(NSUUID *)correlationID
-                      error:(NSError **)error
+                      error:(NSError *__autoreleasing*)error
 {
     if (!tokenResult.account)
     {
@@ -60,7 +61,7 @@
                                      configuration:(MSIDConfiguration *)configuration
                                     requestAccount:(__unused MSIDAccountIdentifier *)accountIdentifier
                                      correlationID:(NSUUID *)correlationID
-                                             error:(__unused NSError **)error
+                                             error:(__unused NSError *__autoreleasing*)error
 
 {
     MSIDLegacyAccessToken *accessToken = [factory legacyAccessTokenFromResponse:tokenResponse configuration:configuration];
@@ -82,7 +83,7 @@
 - (BOOL)validateAccount:(MSIDAccountIdentifier *)accountIdentifier
             tokenResult:(MSIDTokenResult *)tokenResult
           correlationID:(NSUUID *)correlationID
-                  error:(NSError **)error
+                  error:(NSError *__autoreleasing*)error
 {
     MSID_LOG_WITH_CORR_PII(MSIDLogLevelVerbose, correlationID, @"Checking returned account, Input account id %@, returned account ID %@, local account ID %@", MSID_PII_LOG_MASKABLE(accountIdentifier.maskedDisplayableId), MSID_PII_LOG_MASKABLE(tokenResult.account.accountIdentifier.maskedDisplayableId), MSID_PII_LOG_TRACKABLE(tokenResult.account.localAccountId));
     

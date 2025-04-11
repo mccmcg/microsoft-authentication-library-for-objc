@@ -49,7 +49,12 @@
         if (shouldRetry && error)
         {
             // Networking errors (-1001, -1003. -1004. -1005. -1009)
-            shouldRetryNetworkingFailure = [self shouldRetryNetworkingFailure:error.code];
+            shouldRetryNetworkingFailure = [MSIDAADRequestErrorHandler shouldRetryNetworkingFailure:error.code];
+            if (shouldRetryNetworkingFailure && error.code == NSURLErrorNotConnectedToInternet)
+            {
+                // For handling the NSURLErrorNotConnectedToInternet error, retry the network request after a longer delay.
+                httpRequest.retryInterval = 2.0;
+            }
         }
 
         shouldRetry &= shouldRetryNetworkingFailure;
@@ -135,12 +140,28 @@
         [additionalInfo setValue:@1 forKey:MSIDServerUnavailableStatusKey];
     }
     
-    NSError *httpError = MSIDCreateError(MSIDHttpErrorCodeDomain, MSIDErrorServerUnhandledResponse, errorDescription, nil, nil, nil, context.correlationId, additionalInfo, YES);
+    if (data && data.length > 0)
+    {
+        NSString *responseString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if (![NSString msidIsStringNilOrBlank:responseString])
+        {
+            NSString *teleString = responseString.length > 10 ? [responseString substringToIndex:10] : responseString;
+            [additionalInfo setValue:teleString forKey:MSIDHTTPTruncatedResponseStringKey];
+        }
+    }
+    
+    NSError *httpUnderlyingError = nil;
+    if (httpResponse.statusCode == 403 || httpResponse.statusCode == 404)
+    {
+        httpUnderlyingError = MSIDCreateError(MSIDHttpErrorCodeDomain, MSIDErrorUnexpectedHttpResponse, errorDescription, nil, nil, nil, context.correlationId, nil, YES);
+    }
+
+    NSError *httpError = MSIDCreateError(MSIDHttpErrorCodeDomain, MSIDErrorServerUnhandledResponse, errorDescription, nil, nil, httpUnderlyingError, context.correlationId, additionalInfo, YES);
     
     if (completionBlock) completionBlock(nil, httpError);
 }
 
-- (BOOL)shouldRetryNetworkingFailure:(NSInteger)errorCode
++ (BOOL)shouldRetryNetworkingFailure:(NSInteger)errorCode
 {
     switch (errorCode) {
         case NSURLErrorTimedOut:

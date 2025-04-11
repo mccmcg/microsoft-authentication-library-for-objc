@@ -40,10 +40,7 @@ static NSString *const MSID_ACCOUNT_DISPLAYABLE_ID_JSON_KEY = @"username";
 
 + (void)load
 {
-    if (@available(macOS 10.15, *))
-    {
-        [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
-    }
+    [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
 }
 
 + (instancetype)tokenRequestWithParameters:(MSIDRequestParameters *)parameters
@@ -64,17 +61,12 @@ static NSString *const MSID_ACCOUNT_DISPLAYABLE_ID_JSON_KEY = @"username";
 
 + (NSString *)operation
 {
-    if (@available(macOS 10.15, *))
-    {
-        return ASAuthorizationOperationRefresh;
-    }
-    
-    return @"refresh";
+    return ASAuthorizationOperationRefresh;
 }
 
 #pragma mark - MSIDJsonSerializable
 
-- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError **)error
+- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError *__autoreleasing*)error
 {
     self = [super initWithJSONDictionary:json error:error];
     

@@ -43,12 +43,14 @@ NSString *const MSID_BROWSER_NATIVE_MESSAGE_LOGIN_HINT_KEY = @"loginHint";
 NSString *const MSID_BROWSER_NATIVE_MESSAGE_INSTANCE_AWARE_KEY = @"instance_aware";
 NSString *const MSID_BROWSER_NATIVE_MESSAGE_EXTRA_PARAMETERS_KEY = @"extraParameters";
 NSString *const MSID_BROWSER_NATIVE_MESSAGE_REQUEST_KEY = @"request";
+NSString *const MSID_BROWSER_NATIVE_MESSAGE_PLATFORM_SEQUENCE_KEY = @"x-client-xtra-sku";
+NSString *const MSID_BROWSER_NATIVE_MESSAGE_CAN_SHOW_UI_KEY = @"canShowUI";
 
 @implementation MSIDBrowserNativeMessageGetTokenRequest
 
 + (void)load
 {
-//    [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
+    [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
 }
 
 + (NSString *)operation
@@ -56,9 +58,25 @@ NSString *const MSID_BROWSER_NATIVE_MESSAGE_REQUEST_KEY = @"request";
     return @"GetToken";
 }
 
+#pragma mark - MSIDBrokerOperationRequest
+
+- (NSString *)localizedApplicationInfo
+{
+    // clientId && redirectUri are requered params and should be validated during init.
+    NSParameterAssert(self.clientId);
+    NSParameterAssert(self.redirectUri);
+    __auto_type clientId = self.clientId ?: @"";
+    __auto_type redirectUri = self.redirectUri ?: @"";
+    
+    NSString *clientIdKey = NSLocalizedString(@"Client ID", nil);
+    NSString *redirectUriKey = NSLocalizedString(@"Redirect URI", nil);
+    
+    return [NSString stringWithFormat:@"%@: %@ %@: %@", clientIdKey, clientId, redirectUriKey, redirectUri];
+}
+
 #pragma mark - MSIDJsonSerializable
 
-- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError **)error
+- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError *__autoreleasing*)error
 {
     self = [super initWithJSONDictionary:json error:error];
     if (!self) return nil;
@@ -118,6 +136,11 @@ NSString *const MSID_BROWSER_NATIVE_MESSAGE_REQUEST_KEY = @"request";
     if (![requestJson msidAssertType:NSString.class ofKey:MSID_BROWSER_NATIVE_MESSAGE_CORRELATION_KEY required:NO error:error]) return nil;
     NSString *uuidString = requestJson[MSID_BROWSER_NATIVE_MESSAGE_CORRELATION_KEY];
     _correlationId = uuidString ? [[NSUUID alloc] initWithUUIDString:uuidString] : [NSUUID UUID];
+    _platformSequence = [requestJson msidStringObjectForKey:MSID_BROWSER_NATIVE_MESSAGE_PLATFORM_SEQUENCE_KEY];
+    
+    id canShowUIValue = requestJson[MSID_BROWSER_NATIVE_MESSAGE_CAN_SHOW_UI_KEY];
+    // It is optional param, if nil -- set it to 'true' by default.
+    _canShowUI = canShowUIValue ? [requestJson msidBoolObjectForKey:MSID_BROWSER_NATIVE_MESSAGE_CAN_SHOW_UI_KEY] : YES;
     
     return self;
 }

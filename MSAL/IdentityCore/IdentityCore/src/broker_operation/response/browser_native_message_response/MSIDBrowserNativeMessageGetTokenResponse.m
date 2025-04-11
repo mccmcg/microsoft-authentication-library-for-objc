@@ -55,7 +55,7 @@
 
 #pragma mark - MSIDJsonSerializable
 
-- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError **)error
+- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError *__autoreleasing*)error
 {
     @throw MSIDException(MSIDGenericException, @"Not implemented.", nil);
 }
@@ -71,14 +71,18 @@
     }
     
     __auto_type accountJson = [NSMutableDictionary new];
-    accountJson[@"userName"] = tokenResponse.idTokenObj.username;
+    accountJson[@"userName"] = tokenResponse.accountUpn;
     accountJson[@"id"] = tokenResponse.accountIdentifier;
     
     response[@"account"] = accountJson;
     response[@"state"] = self.state;
     
+    __auto_type propertiesJson = [NSMutableDictionary new];
+    // TODO: once ests follow the latest protocol, this should be removed. Account ID should be read from accountJson.
+    propertiesJson[@"UPN"] = accountJson[@"userName"];
+    response[@"properties"] = propertiesJson;
+    
     return response;
 }
 
 @end
-

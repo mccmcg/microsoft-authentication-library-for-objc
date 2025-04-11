@@ -26,12 +26,17 @@
 extern NSString * _Nonnull MSIDErrorDescriptionKey;
 extern NSString * _Nonnull MSIDOAuthErrorKey;
 extern NSString * _Nonnull MSIDOAuthSubErrorKey;
+extern NSString * _Nonnull MSIDOAuthSubErrorDescriptionKey;
 extern NSString * _Nonnull MSIDCorrelationIdKey;
 extern NSString * _Nonnull MSIDHTTPHeadersKey;
 extern NSString * _Nonnull MSIDHTTPResponseCodeKey;
+extern NSString * _Nonnull MSIDHTTPTruncatedResponseStringKey;
 extern NSString * _Nonnull MSIDUserDisplayableIdkey;
 extern NSString * _Nonnull MSIDHomeAccountIdkey;
+extern NSString * _Nonnull MSIDTokenProtectionRequired;
 extern NSString * _Nonnull MSIDBrokerVersionKey;
+extern NSString * _Nonnull MSIDSTSErrorCodesKey;
+extern NSString * _Nonnull MSIDThrottlingCacheHitKey;
 extern NSString * _Nonnull MSIDForgottenPassword;
 
 /*!
@@ -167,6 +172,8 @@ typedef NS_ENUM(NSInteger, MSIDErrorCode)
      */
 
     MSIDErrorServerUnhandledResponse    = -51500,
+    // http status Code 403 or 404
+    MSIDErrorUnexpectedHttpResponse     = -51501,
     
     /*!
      =========================================================
@@ -205,6 +212,8 @@ typedef NS_ENUM(NSInteger, MSIDErrorCode)
     // Tried to open local UI in app extension
     MSIDErrorUINotSupportedInExtension  = -51731,
 
+    // Workplacejoin device upgrade registration required for device.
+    MSIDErrorInsufficientDeviceStrength = -51732,
     /*!
      =========================================================
      Broker flow errors    (518xx and 519xx) - MSIDErrorDomain
@@ -326,6 +335,27 @@ typedef NS_ENUM(NSInteger, MSIDErrorCode)
     // In PSSO, KeyId stored in passkey provider storage does not match NGC key, needs to configure and retry
     MSIDErrorPSSOKeyIdMismatch                     =   -51838,
     
+    // JIT - Error Handling config invalid or not found
+    MSIDErrorJITErrorHandlingConfigNotFound        =   -51839,
+    
+    // Error is thrown when PSSO biometric policy flag mismatches with the config value
+    MSIDErrorPSSOBiometricPolicyMismatch        =   -51840,
+    
+    // Error is thrown when non ENtra passkey extension tries to access the passkey
+    MSIDErrorPSSOInvalidPasskeyExtension        =   -51841,
+    
+    // Error thrown when psso save login config operation fails
+    MSIDErrorPSSOSaveLoginConfigFailure        =   -51842,
+    
+    // Error is thrown when passkey accessed without biometric when h/w biometric policy configured
+    MSIDErrorPSSOPasskeyLAError        =   -51843,
+    
+    // Error is thrown when PSSO user registration attempted with no biometrics configured and sekey biometric policy is configured
+    MSIDErrorPSSOBiometricsNotEnrolled        =   -51844,
+    
+    // Error is thrown when PSSO user registration attempted with no biometrics available and sekey biometric policy is configured
+    MSIDErrorPSSOBiometricsNotAvailable        =   -51845,
+
     // Throttling errors
     MSIDErrorThrottleCacheNoRecord = -51900,
     MSIDErrorThrottleCacheInvalidSignature = -51901,

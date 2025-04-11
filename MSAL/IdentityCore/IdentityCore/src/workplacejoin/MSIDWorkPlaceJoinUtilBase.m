@@ -37,7 +37,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
 + (NSString *_Nullable)getWPJStringDataForIdentifier:(nonnull NSString *)identifier
                                          accessGroup:(nullable NSString *)accessGroup
                                              context:(id<MSIDRequestContext>_Nullable)context
-                                               error:(NSError*__nullable*__nullable)error
+                                               error:(NSError*__nullable __autoreleasing*__nullable)error
 {
     return [self getWPJStringDataFromV2ForTenantId:nil
                                         identifier:identifier
@@ -52,7 +52,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
                                                      key:(nullable NSString *)key
                                              accessGroup:(nullable NSString *)accessGroup
                                                  context:(id<MSIDRequestContext>_Nullable)context
-                                                   error:(NSError*__nullable*__nullable)error
+                                                   error:(NSError*__nullable __autoreleasing*__nullable)error
 {
     // Building dictionary to retrieve given identifier from the keychain
     NSMutableDictionary *query = [[NSMutableDictionary alloc] init];
@@ -243,10 +243,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
     {
         [mutableCertQuery addEntriesFromDictionary:certAttributes];
 #if TARGET_OS_OSX
-        if (@available(macOS 10.15, *))
-        {
-            [mutableCertQuery setObject:@YES forKey:(__bridge id)kSecUseDataProtectionKeychain];
-        }
+        [mutableCertQuery setObject:@YES forKey:(__bridge id)kSecUseDataProtectionKeychain];
 #endif
     }
     
@@ -376,10 +373,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
                                                                                                    (__bridge id)kSecAttrKeySizeInBits : @256
                                                                                                 }];
 #if TARGET_OS_OSX
-    if (@available(macOS 10.15, *))
-    {
-        [privateKeyAttributes setObject:@YES forKey:(__bridge id)kSecUseDataProtectionKeychain];
-    }
+    [privateKeyAttributes setObject:@YES forKey:(__bridge id)kSecUseDataProtectionKeychain];
 #endif
     defaultKeys = [self findWPJRegistrationInfoWithAdditionalPrivateKeyAttributes:privateKeyAttributes certAttributes:extraCertAttributes context:context];
     if (defaultKeys)
@@ -395,7 +389,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
     return legacyKeys;
 }
 
-+ (NSString *)getPrimaryEccTenantWithSharedAccessGroup:(NSString *)sharedAccessGroup context:(id<MSIDRequestContext>_Nullable)context error:(NSError **)error
++ (NSString *)getPrimaryEccTenantWithSharedAccessGroup:(NSString *)sharedAccessGroup context:(id<MSIDRequestContext>_Nullable)context error:(NSError *__autoreleasing*)error
 {
     NSString *res = nil;
     NSMutableDictionary *query = [NSMutableDictionary new];
@@ -404,9 +398,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
     query[(__bridge id <NSCopying>) (kSecAttrAccount)] = @"ecc_default_tenant";
     query[(__bridge id <NSCopying>) (kSecAttrService)] = @"ecc_default_tenant";
 #if TARGET_OS_OSX
-    if (@available(macOS 10.15, *)) {
-        query[(__bridge id <NSCopying>) (kSecUseDataProtectionKeychain)] = @YES;
-    }
+    query[(__bridge id <NSCopying>) (kSecUseDataProtectionKeychain)] = @YES;
 #endif
     query[(__bridge id) kSecAttrAccessGroup] = sharedAccessGroup;
     CFDictionaryRef attributeDictCF = NULL;
@@ -441,7 +433,7 @@ static NSString *kECPrivateKeyTagSuffix = @"-EC";
                                       tenantIdentifier:(NSString *)tenantIdentifier
                                             domainName:(NSString *)domainName
                                                context:(id<MSIDRequestContext>)context
-                                                 error:(NSError **)error
+                                                 error:(NSError *__autoreleasing*)error
 {
     NSMutableDictionary *query = [NSMutableDictionary new];
     query[(id)kSecClass] = (id)kSecClassGenericPassword;

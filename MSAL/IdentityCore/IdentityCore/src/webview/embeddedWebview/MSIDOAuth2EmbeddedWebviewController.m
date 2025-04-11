@@ -63,6 +63,11 @@
 #endif
 }
 
+#if AD_BROKER
+NSString *const SSO_EXTENSION_USER_DEFAULTS_KEY = @"group.com.microsoft.azureauthenticator.sso";
+NSString *const CAMERA_CONSENT_PROMPT_SUPPRESS_KEY = @"Microsoft.Broker.Feature.sdm_suppress_camera_consent";
+#endif
+
 - (id)initWithStartURL:(NSURL *)startURL
                 endURL:(NSURL *)endURL
                webview:(WKWebView *)webview
@@ -107,6 +112,10 @@
     if ([self.webView.navigationDelegate isEqual:self])
     {
         [self.webView setNavigationDelegate:nil];
+    }
+    if ([self.webView.UIDelegate isEqual:self])
+    {
+        [self.webView setUIDelegate:nil];
     }
     
     self.webView = nil;
@@ -169,12 +178,13 @@
     [self endWebAuthWithURL:nil error:error];
 }
 
-- (BOOL)loadView:(NSError **)error
+- (BOOL)loadView:(NSError *__autoreleasing*)error
 {
     // create and load the view if not provided
     BOOL result = [super loadView:error];
     
     self.webView.navigationDelegate = self;
+    self.webView.UIDelegate = self;
 
 #if !EXCLUDE_FROM_MSALCPP
 #if DEBUG
@@ -270,7 +280,7 @@
     
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelVerbose, self.context, @"-decidePolicyForNavigationAction host: %@", MSID_PII_LOG_TRACKABLE(requestURL.host));
     
-    if ([self shouldSendNavigationNotification:requestURL])
+    if ([self shouldSendNavigationNotification:requestURL navigationAction:navigationAction])
     {
         [MSIDNotifications notifyWebAuthDidStartLoad:requestURL userInfo:webView ? @{@"webview" : webView} : nil];
     }
@@ -299,6 +309,10 @@
 - (void)webView:(WKWebView *)webView didFinishNavigation:(null_unspecified __unused WKNavigation *)navigation
 {
     NSURL *url = webView.URL;
+#if MSAL_JS_AUTOMATION
+    [webView evaluateJavaScript:self.clientAutomationScript completionHandler:nil];
+#endif
+    
     [self notifyFinishedNavigation:url webView:webView];
 }
 
@@ -429,7 +443,41 @@
         return;
     }
     
-    decisionHandler(WKNavigationActionPolicyAllow);
+    if (self.customHeaderProvider)
+    {
+        [self.customHeaderProvider getCustomHeaders:navigationAction.request
+                                                    forHost:requestURL.host
+                                            completionBlock:^(NSDictionary<NSString *, NSString *> *extraHeaders, NSError *error){
+            if (extraHeaders && extraHeaders.count > 0)
+            {
+                NSMutableURLRequest *newUrlRequest = [navigationAction.request mutableCopy];
+                
+                for (NSString *headerKey in extraHeaders)
+                {
+                    if (![NSString msidIsStringNilOrBlank:extraHeaders[headerKey]])
+                    {
+                        [newUrlRequest setValue:extraHeaders[headerKey] forHTTPHeaderField:headerKey];
+                    }
+                }
+                
+                decisionHandler(WKNavigationActionPolicyCancel);
+                [self loadRequest:newUrlRequest];
+                return;
+            }
+            
+            if (error)
+            {
+                MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, nil, @"Error received while getting custom headers in embedded webview: %@", MSID_PII_LOG_MASKABLE(error));
+            }
+            
+            decisionHandler(WKNavigationActionPolicyAllow);
+            return;
+        }];
+    }
+    else
+    {
+        decisionHandler(WKNavigationActionPolicyAllow);
+    }
 }
 
 - (void)webView:(WKWebView *)webView didReceiveServerRedirectForProvisionalNavigation:(WKNavigation *)navigation
@@ -440,6 +488,30 @@
         [self completeWebAuthWithURL:url];
     }
 }
+
+#if AD_BROKER
+- (void) webView:(WKWebView *)webView
+requestMediaCapturePermissionForOrigin:(WKSecurityOrigin *)origin
+initiatedByFrame:(WKFrameInfo *)frame
+            type:(WKMediaCaptureType)type
+ decisionHandler:(void (^)(WKPermissionDecision decision))decisionHandler API_AVAILABLE(ios(15.0), macos(12.0))
+{
+    
+    NSUserDefaults *userDefaults = [[NSUserDefaults alloc] initWithSuiteName:SSO_EXTENSION_USER_DEFAULTS_KEY];
+    id cameraConsentValue = [userDefaults objectForKey:CAMERA_CONSENT_PROMPT_SUPPRESS_KEY];
+    
+    if (cameraConsentValue && ([cameraConsentValue isKindOfClass:NSNumber.class] || [cameraConsentValue isKindOfClass:NSString.class]))
+    {
+        if ([cameraConsentValue boolValue] && type == WKMediaCaptureTypeCamera)
+        {
+            decisionHandler(WKPermissionDecisionGrant);
+            return;
+        }
+    }
+    
+    decisionHandler(WKPermissionDecisionPrompt);
+}
+#endif
 
 #pragma mark - Loading Indicator
 
@@ -478,10 +550,15 @@
     [self stopSpinner];
 }
 
-- (BOOL)shouldSendNavigationNotification:(NSURL *)requestURL
+- (BOOL)shouldSendNavigationNotification:(NSURL *)requestURL navigationAction:(WKNavigationAction *)navigationAction
 {
     NSString *requestURLString = [requestURL.absoluteString lowercaseString];
     if ([requestURLString isEqualToString:@"about:blank"] || [requestURLString isEqualToString:@"about:srcdoc"])
+    {
+        return NO;
+    }
+    
+    if (!navigationAction.targetFrame.isMainFrame)
     {
         return NO;
     }

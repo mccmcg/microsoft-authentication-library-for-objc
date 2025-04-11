@@ -61,15 +61,19 @@ clientBrokerKeyCapabilityNotSupported:parameters.clientBrokerKeyCapabilityNotSup
     request.claimsRequest = parameters.claimsRequest;
     request.requestSentDate = requestSentDate;
     request.nonce = parameters.nonce;
+    request.webPageUri = parameters.webPageUri;
     request.clientSku = parameters.clientSku;
     request.skipValidateResultAccount = parameters.skipValidateResultAccount;
     request.forceRefresh = parameters.forceRefresh;
+    request.platformSequence = parameters.platformSequence;
+    request.allowAnyExtraURLQueryParameters = parameters.allowAnyExtraURLQueryParameters;
+    request.ignoreScopeValidation = parameters.ignoreScopeValidation;
     return YES;
 }
 
 #pragma mark - MSIDJsonSerializable
 
-- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError **)error
+- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError *__autoreleasing*)error
 {
     self = [super initWithJSONDictionary:json error:error];
     
@@ -77,6 +81,8 @@ clientBrokerKeyCapabilityNotSupported:parameters.clientBrokerKeyCapabilityNotSup
     {
         _configuration = [[MSIDConfiguration alloc] initWithJSONDictionary:json error:error];
         if (!_configuration) return nil;
+        
+        _webPageUri = [json msidStringObjectForKey:@"web_page_uri"];
         
         _providerType = MSIDProviderTypeFromString([json msidStringObjectForKey:MSID_PROVIDER_TYPE_JSON_KEY]);
         
@@ -134,6 +140,7 @@ clientBrokerKeyCapabilityNotSupported:parameters.clientBrokerKeyCapabilityNotSup
     }
         
     [json addEntriesFromDictionary:configurationJson];
+    json[@"web_page_uri"] = self.webPageUri;
     json[MSID_PROVIDER_TYPE_JSON_KEY] = MSIDProviderTypeToString(self.providerType);
     json[MSID_BROKER_EXTRA_OIDC_SCOPES_KEY] = self.oidcScope;
     json[MSID_BROKER_EXTRA_QUERY_PARAM_KEY] = [self.extraQueryParameters msidWWWFormURLEncode];
@@ -148,6 +155,7 @@ clientBrokerKeyCapabilityNotSupported:parameters.clientBrokerKeyCapabilityNotSup
     json[MSID_CLIENT_SKU_KEY] = self.clientSku;
     json[MSID_SKIP_VALIDATE_RESULT_ACCOUNT_KEY] = [@(self.skipValidateResultAccount) stringValue];
     json[MSID_FORCE_REFRESH_KEY] = [@(self.forceRefresh) stringValue];
+    
     return json;
 }
 

@@ -48,20 +48,28 @@
 @property (nonatomic) MSIDAuthority *providedAuthority;
 @property (nonatomic) MSIDAuthority *cloudAuthority;
 @property (nonatomic) NSString *redirectUri;
+@property (nonatomic) NSString *webPageUri;
 @property (nonatomic) NSString *clientId;
 @property (nonatomic) NSString *target;
 @property (nonatomic) NSString *oidcScope;
 @property (nonatomic) MSIDAccountIdentifier *accountIdentifier;
 @property (nonatomic) BOOL validateAuthority;
+@property (nonatomic) BOOL ignoreScopeValidation;
 @property (nonatomic) NSString *nonce;
 @property (nonatomic) NSString *clientSku;
 @property (nonatomic) BOOL skipValidateResultAccount;
 @property (nonatomic) BOOL forceRefresh;
+@property (nonatomic) BOOL bypassRedirectURIValidation;
+
+// Telemetry metadata
+@property (nonatomic) NSString *platformSequence;
 
 // Additional body parameters that will be appended to all token requests
 @property (nonatomic) NSDictionary *extraTokenRequestParameters;
 // Additional URL query parameters that will be added to both token and authorize requests
 @property (nonatomic) NSDictionary *extraURLQueryParameters;
+// Currently used only in broker to enable/disable EQP filtering.
+@property (nonatomic) BOOL allowAnyExtraURLQueryParameters;
 @property (nonatomic) NSUInteger tokenExpirationBuffer;
 @property (nonatomic) BOOL extendedLifetimeEnabled;
 @property (nonatomic) BOOL instanceAware;
@@ -106,7 +114,7 @@
 - (void)setCloudAuthorityWithCloudHostName:(NSString *)cloudHostName;
 - (NSString *)allTokenRequestScopes;
 
-- (BOOL)validateParametersWithError:(NSError **)error;
+- (BOOL)validateParametersWithError:(NSError *__autoreleasing*)error;
 
 - (void)updateAppRequestMetadata:(NSString *)homeAccountId;
 
@@ -125,6 +133,6 @@
                    telemetryApiId:(NSString *)telemetryApiId
               intuneAppIdentifier:(NSString *)intuneApplicationIdentifier
                       requestType:(MSIDRequestType)requestType
-                            error:(NSError **)error;
+                            error:(NSError *__autoreleasing*)error;
 
 @end

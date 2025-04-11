@@ -35,8 +35,9 @@
 - (BOOL)validateTokenResult:(MSIDTokenResult *)tokenResult
               configuration:(MSIDConfiguration *)configuration
                   oidcScope:(NSString *)oidcScope
+             validateScopes:(BOOL)validateScopes
               correlationID:(NSUUID *)correlationID
-                      error:(NSError **)error
+                      error:(NSError *__autoreleasing*)error
 {
     /*
      If server returns less scopes than developer requested,
@@ -47,6 +48,8 @@
     {
         return YES;
     }
+    
+    if (!validateScopes) return YES;
 
     NSOrderedSet *grantedScopes = tokenResult.accessToken.scopes;
     NSOrderedSet *normalizedGrantedScopes = grantedScopes.normalizedScopeSet;
@@ -95,7 +98,7 @@
 - (BOOL)validateAccount:(MSIDAccountIdentifier *)accountIdentifier
             tokenResult:(MSIDTokenResult *)tokenResult
               correlationID:(NSUUID *)correlationID
-                      error:(NSError **)error
+                      error:(NSError *__autoreleasing*)error
 {
     if (accountIdentifier.uid != nil
         && ![accountIdentifier.uid isEqualToString:tokenResult.account.accountIdentifier.uid])

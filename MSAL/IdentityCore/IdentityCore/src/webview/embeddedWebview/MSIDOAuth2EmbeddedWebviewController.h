@@ -33,11 +33,12 @@
 #import "MSIDWebviewUIController.h"
 #import "MSIDAuthorizeWebRequestConfiguration.h"
 #import "MSIDWebViewPlatformParams.h"
+#import "MSIDCustomHeaderProviding.h"
 
 typedef void (^MSIDNavigationResponseBlock)(NSHTTPURLResponse *response);
 
 @interface MSIDOAuth2EmbeddedWebviewController :
-MSIDWebviewUIController <MSIDWebviewInteracting, WKNavigationDelegate>
+MSIDWebviewUIController <MSIDWebviewInteracting, WKNavigationDelegate, WKUIDelegate>
 
 typedef NSURLRequest *(^MSIDExternalDecidePolicyForBrowserActionBlock)(MSIDOAuth2EmbeddedWebviewController *webView, NSURL *url);
 
@@ -60,6 +61,10 @@ typedef NSURLRequest *(^MSIDExternalDecidePolicyForBrowserActionBlock)(MSIDOAuth
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *customHeaders;
 @property (nonatomic, copy) MSIDNavigationResponseBlock navigationResponseBlock;
 @property (nonatomic, copy) MSIDExternalDecidePolicyForBrowserActionBlock externalDecidePolicyForBrowserAction;
+@property (nonatomic) id<MSIDCustomHeaderProviding> customHeaderProvider;
+#if MSAL_JS_AUTOMATION
+@property (nonatomic) NSString *clientAutomationScript;
+#endif
 
 @end
 

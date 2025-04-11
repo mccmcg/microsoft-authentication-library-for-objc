@@ -25,6 +25,7 @@
 #import "MSIDAuthorizeWebRequestConfiguration.h"
 #import "NSOrderedSet+MSIDExtensions.h"
 #import "MSIDWebWPJResponse.h"
+#import "MSIDWebUpgradeRegResponse.h"
 #import "MSIDWebAADAuthCodeResponse.h"
 #import "MSIDDeviceId.h"
 #import "MSIDAADOAuthEmbeddedWebviewController.h"
@@ -37,6 +38,9 @@
 #import "MSIDSignoutWebRequestConfiguration.h"
 #import "NSURL+MSIDAADUtils.h"
 #import "MSIDInteractiveTokenRequestParameters.h"
+#import "MSIDSwitchBrowserResponse.h"
+#import "MSIDSwitchBrowserResumeResponse.h"
+#import "MSIDFlightManager.h"
 
 #if !EXCLUDE_FROM_MSALCPP
 #import "MSIDJITTroubleshootingResponse.h"
@@ -72,13 +76,21 @@
     {
         [result addEntriesFromDictionary:
          @{
-           MSID_OAUTH2_CORRELATION_ID_REQUEST : @"true",
-           MSID_OAUTH2_CORRELATION_ID_REQUEST_VALUE : [parameters.correlationId UUIDString]
-           }];
+            MSID_OAUTH2_CORRELATION_ID_REQUEST : @"true",
+            MSID_OAUTH2_CORRELATION_ID_REQUEST_VALUE : [parameters.correlationId UUIDString]
+        }];
     }
     
     result[@"haschrome"] = @"1";
     [result addEntriesFromDictionary:MSIDDeviceId.deviceId];
+    
+#if TARGET_OS_IPHONE
+    if ([MSIDFlightManager.sharedInstance boolForKey:MSID_FLIGHT_SUPPORT_DUNA_CBA])
+    {
+        // Let server know that we support new cba flow
+        result[MSID_BROWSER_RESPONSE_SWITCH_BROWSER] = @"1";
+    }
+#endif
     
     return result;
 }
@@ -110,13 +122,17 @@
         platformParams = [[MSIDWebViewPlatformParams alloc] initWithExternalSSOContext:configuration.ssoContext];
     }
     
-     MSIDAADOAuthEmbeddedWebviewController *embeddedWebviewController
-       = [[MSIDAADOAuthEmbeddedWebviewController alloc] initWithStartURL:configuration.startURL
-                                                                  endURL:[NSURL URLWithString:configuration.endRedirectUrl]
-                                                                 webview:webview
-                                                           customHeaders:configuration.customHeaders
-                                                          platfromParams:platformParams
-                                                                 context:context];
+    MSIDAADOAuthEmbeddedWebviewController *embeddedWebviewController
+      = [[MSIDAADOAuthEmbeddedWebviewController alloc] initWithStartURL:configuration.startURL
+                                                                 endURL:[NSURL URLWithString:configuration.endRedirectUrl]
+                                                                webview:webview
+                                                          customHeaders:configuration.customHeaders
+                                                         platfromParams:platformParams
+                                                                context:context];
+                                                                
+#if MSAL_JS_AUTOMATION
+    embeddedWebviewController.clientAutomationScript = configuration.clientAutomationScript;
+#endif
     
 #if TARGET_OS_IPHONE
     embeddedWebviewController.parentController = configuration.parentController;
@@ -124,6 +140,7 @@
 #endif
     
     embeddedWebviewController.externalDecidePolicyForBrowserAction = externalDecidePolicyForBrowserAction;
+    embeddedWebviewController.customHeaderProvider = configuration.customHeaderProvider;
 
     return embeddedWebviewController;
 }
@@ -133,8 +150,9 @@
 - (MSIDWebviewResponse *)oAuthResponseWithURL:(NSURL *)url
                                  requestState:(NSString *)requestState
                            ignoreInvalidState:(BOOL)ignoreInvalidState
+                               endRedirectUri:(NSString *)endRedirectUri
                                       context:(id<MSIDRequestContext>)context
-                                        error:(NSError **)error
+                                        error:(NSError *__autoreleasing*)error
 {
     // Try to create CBA response
 #if AD_BROKER
@@ -169,7 +187,11 @@
 #endif
     
 #endif
-    
+
+    // Try to create a upgrade registration response
+    MSIDWebUpgradeRegResponse *upgradeRegResponse = [[MSIDWebUpgradeRegResponse alloc] initWithURL:url context:context error:nil];
+    if (upgradeRegResponse) return upgradeRegResponse;
+
     // Try to create a WPJ response
     MSIDWebWPJResponse *wpjResponse = [[MSIDWebWPJResponse alloc] initWithURL:url context:context error:nil];
     if (wpjResponse) return wpjResponse;
@@ -180,7 +202,22 @@
                                                                                             error:nil];
     if (browserResponse) return browserResponse;
     
-    // Try to create AAD Auth response
+    if ([MSIDFlightManager.sharedInstance boolForKey:MSID_FLIGHT_SUPPORT_DUNA_CBA])
+    {
+        MSIDSwitchBrowserResponse *switchBrowserResponse = [[MSIDSwitchBrowserResponse alloc] initWithURL:url
+                                                                                              redirectUri:endRedirectUri
+                                                                                                  context:context
+                                                                                                    error:nil];
+        if (switchBrowserResponse) return switchBrowserResponse;
+        
+        MSIDSwitchBrowserResumeResponse *switchBrowserResumeResponse = [[MSIDSwitchBrowserResumeResponse alloc] initWithURL:url
+                                                                                                                redirectUri:endRedirectUri
+                                                                                                                    context:context
+                                                                                                                      error:nil];
+        if (switchBrowserResumeResponse) return switchBrowserResumeResponse;
+    }
+    
+    // Try to create AAD Auth response or Error response (all other reponses don't handle errors).
     MSIDWebAADAuthCodeResponse *response = [[MSIDWebAADAuthCodeResponse alloc] initWithURL:url
                                                                               requestState:requestState
                                                                         ignoreInvalidState:ignoreInvalidState

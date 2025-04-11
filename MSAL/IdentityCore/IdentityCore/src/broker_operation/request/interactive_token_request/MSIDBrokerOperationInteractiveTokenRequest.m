@@ -34,10 +34,7 @@
 
 + (void)load
 {
-    if (@available(macOS 10.15, *))
-    {
-        [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
-    }
+    [MSIDJsonSerializableFactory registerClass:self forClassType:self.operation];
 }
 
 + (instancetype)tokenRequestWithParameters:(MSIDInteractiveTokenRequestParameters *)parameters
@@ -66,17 +63,12 @@
 
 + (NSString *)operation
 {
-    if (@available(macOS 10.15, *))
-    {
-        return ASAuthorizationOperationLogin;
-    }
-    
-    return @"login";
+    return ASAuthorizationOperationLogin;
 }
 
 #pragma mark - MSIDJsonSerializable
 
-- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError **)error
+- (instancetype)initWithJSONDictionary:(NSDictionary *)json error:(NSError *__autoreleasing*)error
 {
     self = [super initWithJSONDictionary:json error:error];
     
