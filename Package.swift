@@ -1,18 +1,50 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 
 import PackageDescription
 
 let package = Package(
-  name: "MSAL",
-  platforms: [
-        .macOS(.v10_15),.iOS(.v14)
-  ],
-  products: [
-      .library(
-          name: "MSAL",
-          targets: ["MSAL"]),
-  ],
-  targets: [
-      .binaryTarget(name: "MSAL", url: "https://github.com/AzureAD/microsoft-authentication-library-for-objc/releases/download/1.8.1/MSAL.zip", checksum: "b783b229da1cdd0c01ba3e46e089e1d8af8bcb4b2306e15e8f713970f54f84ff")
-  ]
+    name: "MSAL",
+    defaultLocalization: "en",
+    platforms: [
+        .iOS(.v13)
+    ],
+    products: [
+        .library(
+            name: "MSAL",
+            targets: ["MSAL"]
+        )
+    ],
+    targets: [
+        .target(
+            name: "MSAL",
+            path: "MSAL/src",
+            exclude: [
+                "Info.plist",
+                "mac",
+                "watchos"
+            ],
+            sources: [
+                "."
+            ],
+            publicHeadersPath: "public",
+            resources: [
+                .process("../resources")
+            ],
+            cSettings: [
+                .headerSearchPath("."),
+                .headerSearchPath("../external"),
+                .headerSearchPath("../external/IdentityCore/src"),
+                .define("TARGET_OS_IOS", to: "1"),
+                .define("MSAL_SPM", to: "1")
+            ],
+            linkerSettings: [
+                .linkedFramework("AuthenticationServices"),
+                .linkedFramework("SafariServices"),
+                .linkedFramework("Security"),
+                .linkedFramework("UIKit"),
+                .linkedFramework("CoreGraphics")
+            ]
+        )
+    ],
+    cLanguageStandard: .gnu11
 )
